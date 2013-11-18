@@ -77,10 +77,14 @@ public class Map {
 		}
 	}
 	
-	
+	/**
+	 * Loads a premade map. Only certain maps are accepted
+	 * @param map - can be Def.SAMPLE_MAP_1
+	 * @throws IOException - if the file cannot be opened
+	 */
 	public void load_map(int map) throws IOException{
 		if(map == Def.SAMPLE_MAP_1){
-			log.write("Loading map sample map 1...\r\n");
+			Def.output(log, "Loading map sample map 1...\r\n");
 			
 			BufferedReader br = new BufferedReader(new FileReader("sample_map_1.txt"));
 			String line = br.readLine();
@@ -96,8 +100,16 @@ public class Map {
 			}
 			br.close();
 		}
+		else{
+			Def.output(log, "Map not found.");
+			System.exit(-1);
+		}
 	}
 	
+	/**
+	 * prints out the current statistics based on the map square codes
+	 * @throws IOException - if there is an issue with the log file
+	 */
 	public void print_stats() throws IOException{
 		int squares = grid.size() * grid.get(0).size();
 		ArrayList<Integer> stats = new ArrayList<Integer>();	//0 = total squares, 1 = black squares, 2 = accessible squares, 3 = squares seen
@@ -117,10 +129,8 @@ public class Map {
 		stats.add(a_squares);
 		stats.add(s_squares);
 		
-		System.out.println("\nMap stats:");
-		log.write("\r\nMap stats: \r\n");
-		System.out.printf("Total squares = %d\nInaccessible squares = %d\nAccessible squares = %d\nAccessed squares = %d\n\n", squares, b_squares, a_squares, s_squares);
-		log.write(String.format("Total squares = %d\nInaccessible squares = %d\nAccessible squares = %d\nAccessed squares = %d\n\n", squares, b_squares, a_squares, s_squares));
+		Def.output(log, "\r\nMap stats: \r\n");
+		Def.output(log, String.format("Total squares = %d\nInaccessible squares = %d\nAccessible squares = %d\nAccessed squares = %d\n\n", squares, b_squares, a_squares, s_squares));
 	}
 	
 	public void generate(int seed) throws IOException{
@@ -602,6 +612,12 @@ public class Map {
 		
 	}
 	
+	/**
+	 * gets the value at the specified xx, yy values
+	 * @param xx 
+	 * @param yy
+	 * @return -1 if xx,yy are invalid or the value in the grid
+	 */
 	public int get(int xx, int yy){
 		if(xx < 0 || xx > grid.size())
 			return -1;
@@ -611,6 +627,14 @@ public class Map {
 			return grid.get(xx).get(yy);
 	}
 	
+	
+	/**
+	 * Updates the value in the grid of the <xx>, <yy> position to <type>
+	 * @param xx
+	 * @param yy
+	 * @param type
+	 * @return -1 if update unsuccesful, or 0 if it is
+	 */
 	public int update(int xx, int yy, int type){
 		if(xx < 0 || xx > grid.size())
 			return -1;
@@ -625,7 +649,12 @@ public class Map {
 		}
 	}
 	
-	public Point find_start_position(){
+	/**
+	 * Finds the starting position of the quadcopter
+	 * @return Point where the middle of the hallway is 
+	 * @throws IOException  if there is an error with the log file
+	 */
+	public Point find_start_position() throws IOException{
 		int xx = -1, yy = -1;
 		for(int ii = 0; ii < grid.size(); ii++){
 			if(grid.get(ii).get(0) == 2){
@@ -649,9 +678,14 @@ public class Map {
 				break;
 			}
 		}
+		Def.output(log, String.format("Starting position is at (%d,%d)\r\n", xx, yy));
 		return new Point(xx, yy);
 	}
 	
+	/**
+	 * Prints a ascii version of the map to map.txt
+	 * @throws IOException - if there is an issue with map.txt
+	 */
 	public void printMap() throws IOException{
 		BufferedWriter bw = new BufferedWriter(new FileWriter("map.txt"));
 		for(int ii = 0; ii < grid.size(); ii++){
@@ -663,9 +697,18 @@ public class Map {
 		bw.close();
 	}
 	
+	/**
+	 * Attaches GUI object to Map object
+	 * @param gui
+	 */
 	public void attachGUI(GUI gui){ this.gui = gui;}
 }
 
+/**
+ * Hallway struct
+ * @author Mikhail
+ *
+ */
 class hallway{
 	public Point start;
 	public Point end;
@@ -684,6 +727,11 @@ class hallway{
 	}
 }
 
+/**
+ * room struct
+ * @author Mikhail
+ *
+ */
 class room{
 	public int doors;
 	public Point start;

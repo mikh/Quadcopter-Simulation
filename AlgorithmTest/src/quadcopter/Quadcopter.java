@@ -41,7 +41,7 @@ public class Quadcopter {
 	
 	private ArrayList<Point> points_seen;
 	
-	public Quadcopter(BufferedWriter logger, Map map, GUI gui){
+	public Quadcopter(BufferedWriter logger, Map map, GUI gui) throws IOException{
 		this.map = map;
 		this.log = logger;
 		this.gui = gui;
