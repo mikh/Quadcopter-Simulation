@@ -48,10 +48,9 @@ public class Map {
 	 * @throws IOException: If there is an issue with logging file
 	 */
 	public Map(BufferedWriter log_file) throws IOException{
-		Def.output(log, "Map construction initiated\r\n");
 		grid = new ArrayList<ArrayList<Integer>>();
 		log = log_file;
-		
+		Def.output(log, "Map construction initiated\r\n");
 		//get number of squares
 		int xx = Def.MAP_SIZE_FT_X, yy = Def.MAP_SIZE_FT_Y;
 		
@@ -137,476 +136,44 @@ public class Map {
 		log.write("Generating map...\r\n");
 		Random rand = new Random(seed);
 		
+		int grid_x = grid.size(), grid_y = grid.get(0).size();
+		int hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE;
+		
 		//first create border
-		for(int ii = 0; ii < grid.size(); ii++){
-			if(ii == 0 || ii == grid.size() - 1){
-				for(int jj = 0; jj < grid.get(ii).size(); jj++)
-					grid.get(ii).set(jj, 1);
+		for(int ii = 0; ii < grid_x; ii++){
+			if(ii == 0 || ii == grid_x - 1){
+				for(int jj = 0; jj < grid_y; jj++)
+					grid.get(ii).set(jj, Def.WALL_CODE);
 			}
 			else{
 				grid.get(ii).set(0, 1);
-				grid.get(ii).set(grid.get(ii).size()-1, 1);
+				grid.get(ii).set(grid_y-1, 1);
 			}
 		}
 		
-		//Create point of entry
-		Point pos1 = new Point(0,0), pos2 = new Point(0,0);
-		int direction = rand.nextInt(4), position;	//0 - top, 1 - left, 2 - down, 3 - right
-		if(direction == 0 || direction == 2){
-			position = rand.nextInt(grid.size() - 2 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)) + 1;
-			if(direction == 0){
-				for(int ii = 0; ii < (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE); ii++){
-					grid.get(position+ii).set(0, 2);
-				}
-				pos1 = new Point(position, 0);
-				pos2 = new Point(position + (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE), 0);
-			} else{
-				for(int ii = 0; ii < (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE); ii++){
-					grid.get(position + ii).set(grid.get(position + ii).size()-1, 2);
-				}
-				pos1 = new Point(position, grid.get(position).size()-1);
-				pos2 = new Point(position+ (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE), grid.get(position+ (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)).size()-1);
-			}
-		}
-		else if(direction == 1 || direction == 3){
-			if(direction == 1){
-				position = rand.nextInt(grid.get(grid.size()-1).size() - 2 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)) + 1;
-				for(int ii = 0; ii < (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE); ii++){
-					grid.get(grid.size()-1).set(position+ii, 2);
-				}
-				pos1 = new Point(grid.get(position).size()-1, position);
-				pos2 = new Point(grid.get(position + (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)).size()-1, position + (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE));
-			} else{
-				position = rand.nextInt(grid.get(0).size() - 2 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)) + 1;
-				for(int ii = 0; ii < (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE); ii++){
-					grid.get(0).set(position+ii, 2);
-				}
-				pos1 = new Point(0, position);
-				pos2 = new Point(0, position+(Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE));
-			}
-		}
-		
-		
-		//generateha floor plan
-		//at each segment in the hallway, there is some chance 
-		
-		ArrayList<hallway> hallway_stack = new ArrayList<hallway>();
-		ArrayList<room> room_list = new ArrayList<room>();
-		
-		int hallway_increments = 0;
-		hallway_stack.add(new hallway(pos1, pos2, direction));
-		int hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE;
-		int grid_x = grid.size(), grid_y = grid.get(0).size();
-		
-		while(hallway_increments < Def.HALLWAY_INCREMENTS){
-			hallway_increments++;
-						
-			for(int ii = 0; ii < hallway_stack.size(); ii++){
-				int xx_s = hallway_stack.get(ii).start.x, yy_s = hallway_stack.get(ii).start.y, xx_e = hallway_stack.get(ii).end.x, yy_e = hallway_stack.get(ii).end.y;
-				int action = 0;	//0 = unassigned, 1 = turn left, 2 = turn right, 3 = fork left, 4 = fork right, 5 = fork both, 6 = dead end
-				
-				switch(hallway_stack.get(ii).direction){
-					case 0:		
-						action = 0;
-						if(yy_s == grid_y - 2 - hallL){ //you are hitting a wall soon. So turn or dead end it.
-							double prob = rand.nextDouble();
-							
-							if(hallway_stack.size() == 1){//if you're the only hallway left and you can't dead-end
-								if(xx_e >= (grid_x - 1 - hallL)) action = 1;		//turn right if there is a wall to the left
-								else if(xx_s <= hallL)	action = 2; 				//if there is a wall to the right turn right
-								else if(prob > 0.5) action = 1; //turn left
-								else action = 2;  //turn right
-							} else{		//can dead end
-								if(prob > 0.66) action = 6;  //dead end
-								else if( prob > 0.33){	//turn left
-									action = 1;
-									if(xx_s <= hallL) action = 2;
-									
-								} else{ //turn right
-									action = 2;
-									if(xx_e >= (grid_x - 1 - hallL)) action = 1;
-								}
-							}				
-						}
-						
-						if(action == 0){
-							double prob = rand.nextDouble();
-							if(prob < 0.01){
-								//dead end
-								if(hallway_stack.size() == 1)
-									action = 0;
-								else
-									action  = 6;
-							} /*else if (prob < 0.06){
-								//fork
-								if(hallway_stack.get(ii).end.x >= (grid.size() - 1 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 4;
-								else if((hallway_stack.get(ii).start.x <= (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 3;
-								else if(prob < 0.011)
-									action = 5;
-								else if(prob < 0.035)
-									action = 3;
-								else
-									action = 4;
-							}*/ else if(prob < 0.11){
-								//turn
-								if(hallway_stack.get(ii).end.x >= (grid.size() - 1 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 2;
-								else if((hallway_stack.get(ii).start.x <= (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 1;
-								else if(prob < 0.085)
-									action = 1;
-								else
-									action = 2;
-							}
-							else if(prob < 0.21){
-								//room
-								//TODO:make room code
-								action = 0;
-							}
-						}
-						
-						
-						//generation
-						switch(action){
-							case 0:	//move forward
-								for(int kk = 0; kk < hallL; kk++){
-									grid.get(xx_s+kk).set(yy_s+1, 2);
-								}
-								hallway_stack.get(ii).start.y = yy_s+1;
-								hallway_stack.get(ii).end.y = yy_e+1;
-								break;
-							case 1:	//turn left
-								for(int jj = -1; jj < hallL; jj++){
-									for(int kk = 1; kk <= hallL; kk++){
-										grid.get(xx_s+jj).set(yy_s+kk, 2);
-									}
-								}
-								
-								hallway_stack.get(ii).start.x = xx_s - 1;
-								hallway_stack.get(ii).start.y = yy_s + 1;
-								hallway_stack.get(ii).end.x = xx_s - 1;
-								hallway_stack.get(ii).end.y = yy_s +  hallL;
-								hallway_stack.get(ii).direction = 1;
-								break;
-							case 2:	//turn right
-								for(int jj = 0; jj <= hallL; jj++){
-									for(int kk = 1; kk <= hallL; kk++){
-										grid.get(xx_s+jj).set(yy_s+kk, 2);
-									}
-								}
-								
-								hallway_stack.get(ii).start.x = xx_s + hallL;
-								hallway_stack.get(ii).start.y = yy_s + 1;
-								hallway_stack.get(ii).end.x = xx_s + hallL;
-								hallway_stack.get(ii).end.y = yy_s + hallL;
-								hallway_stack.get(ii).direction = 3;
-								break;
-						}
-						
-					break;
-					case 1:		
-						action = 0;
-						if(xx_s == 1 + hallL){ //you are hitting a wall soon. So turn or dead end it.
-							double prob = rand.nextDouble();
-							
-							if(hallway_stack.size() == 1){//if you're the only hallway left and you can't dead-end
-								if(yy_s <=  hallL) action = 1;		//turn right if there is a wall to the left
-								else if(yy_e >= (grid_y - 1 - hallL))	action = 2; 				//if there is a wall to the right turn right
-								else if(prob > 0.5) action = 1; //turn left
-								else action = 2;  //turn right
-							} else{		//can dead end
-								if(prob > 0.66) action = 6;  //dead end
-								else if( prob > 0.33){	//turn left
-									action = 1;
-									if(yy_e >= (grid_y - 1 - hallL))	action = 2;
-									
-								} else{ //turn right
-									action = 2;
-									if(yy_s <=  hallL) action = 1;
-								}
-							}				
-						}
-						
-						if(action == 0){
-							double prob = rand.nextDouble();
-							if(prob < 0.01){
-								//dead end
-								if(hallway_stack.size() == 1)
-									action = 0;
-								else
-									action  = 6;
-							} /*else if (prob < 0.06){
-								//fork
-								if(hallway_stack.get(ii).end.x >= (grid.size() - 1 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 4;
-								else if((hallway_stack.get(ii).start.x <= (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 3;
-								else if(prob < 0.011)
-									action = 5;
-								else if(prob < 0.035)
-									action = 3;
-								else
-									action = 4;
-							}*/ else if(prob < 0.11){
-								//turn
-								if(hallway_stack.get(ii).end.x >= (grid.size() - 1 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 2;
-								else if((hallway_stack.get(ii).start.x <= (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 1;
-								else if(prob < 0.085)
-									action = 1;
-								else
-									action = 2;
-							}
-							else if(prob < 0.21){
-								//room
-								//TODO:make room code
-								action = 0;
-							}
-						}
-						
-						
-						//generation
-						switch(action){
-							case 0:	//move forward
-								for(int kk = 0; kk < hallL; kk++){
-									grid.get(xx_s-1).set(yy_s+kk, 2);
-								}
-								hallway_stack.get(ii).start.x = xx_s-1;
-								hallway_stack.get(ii).end.x = xx_e-1;
-								break;
-							case 1:	//turn left
-								for(int jj = -1*(hallL); jj < 0; jj++){
-									for(int kk = 0; kk <= hallL; kk++){
-										grid.get(xx_s+jj).set(yy_s+kk, 2);
-									}
-								}
-								
-								hallway_stack.get(ii).start.x = xx_s - hallL;
-								hallway_stack.get(ii).start.y = yy_s + hallL;
-								hallway_stack.get(ii).end.x = xx_s - 1;
-								hallway_stack.get(ii).end.y = yy_s + hallL;
-								hallway_stack.get(ii).direction = 0;
-								break;
-							case 2:	//turn right
-								for(int jj = -1*hallL; jj < 0; jj++){
-									for(int kk = -1; kk < hallL; kk++){
-										grid.get(xx_s+jj).set(yy_s+kk, 2);
-									}
-								}
-								
-								hallway_stack.get(ii).start.x = xx_s - hallL;
-								hallway_stack.get(ii).start.y = yy_s + 1;
-								hallway_stack.get(ii).end.x = xx_s - 1;
-								hallway_stack.get(ii).end.y = yy_s + 1;
-								hallway_stack.get(ii).direction = 2;
-								break;
-						}
-						
-					break;
-					case 2:		
-						action = 0;
-						if(yy_s == hallL + 1){ //you are hitting a wall soon. So turn or dead end it.
-							double prob = rand.nextDouble();
-							
-							if(hallway_stack.size() == 1){//if you're the only hallway left and you can't dead-end
-								if(xx_e >= (grid_x - 1 - hallL)) action = 1;		//turn right if there is a wall to the left
-								else if(xx_s <= hallL)	action = 2; 				//if there is a wall to the right turn right
-								else if(prob > 0.5) action = 1; //turn left
-								else action = 2;  //turn right
-							} else{		//can dead end
-								if(prob > 0.66) action = 6;  //dead end
-								else if( prob > 0.33){	//turn left
-									action = 1;
-									if(xx_s <= hallL) action = 2;
-									
-								} else{ //turn right
-									action = 2;
-									if(xx_e >= (grid_x - 1 - hallL)) action = 1;
-								}
-							}				
-						}
-						
-						if(action == 0){
-							double prob = rand.nextDouble();
-							if(prob < 0.01){
-								//dead end
-								if(hallway_stack.size() == 1)
-									action = 0;
-								else
-									action  = 6;
-							} /*else if (prob < 0.06){
-								//fork
-								if(hallway_stack.get(ii).end.x >= (grid.size() - 1 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 4;
-								else if((hallway_stack.get(ii).start.x <= (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 3;
-								else if(prob < 0.011)
-									action = 5;
-								else if(prob < 0.035)
-									action = 3;
-								else
-									action = 4;
-							}*/ else if(prob < 0.11){
-								//turn
-								if(hallway_stack.get(ii).end.x >= (grid.size() - 1 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 2;
-								else if((hallway_stack.get(ii).start.x <= (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 1;
-								else if(prob < 0.085)
-									action = 1;
-								else
-									action = 2;
-							}
-							else if(prob < 0.21){
-								//room
-								//TODO:make room code
-								action = 0;
-							}
-						}
-						
-						
-						//generation
-						switch(action){
-							case 0:	//move forward
-								for(int kk = 0; kk < hallL; kk++){
-									grid.get(xx_s+kk).set(yy_s-1, 2);
-								}
-								hallway_stack.get(ii).start.y = yy_s-1;
-								hallway_stack.get(ii).end.y = yy_e-1;
-								break;
-							case 1:	//turn left
-								for(int jj = -1; jj < hallL; jj++){
-									for(int kk = -hallL-1; kk < 0; kk++){
-										grid.get(xx_s+jj).set(yy_s+kk, 2);
-									}
-								}
-								
-								hallway_stack.get(ii).start.x = xx_s - 1;
-								hallway_stack.get(ii).start.y = yy_s - hallL;
-								hallway_stack.get(ii).end.x = xx_s - 1;
-								hallway_stack.get(ii).end.y = yy_s - 1;
-								hallway_stack.get(ii).direction = 1;
-								break;
-							case 2:	//turn right
-								for(int jj = 0; jj <= hallL; jj++){
-									for(int kk = -hallL; kk < 0; kk++){
-										grid.get(xx_s+jj).set(yy_s+kk, 2);
-									}
-								}
-								
-								hallway_stack.get(ii).start.x = xx_s + hallL;
-								hallway_stack.get(ii).start.y = yy_s - hallL;
-								hallway_stack.get(ii).end.x = xx_s + hallL;
-								hallway_stack.get(ii).end.y = yy_s - 1;
-								hallway_stack.get(ii).direction = 3;
-								break;
-						}
-						
-					break;
-					case 3:		
-						action = 0;
-						if(xx_s == grid_x - 2 - hallL){ //you are hitting a wall soon. So turn or dead end it.
-							double prob = rand.nextDouble();
-							
-							if(hallway_stack.size() == 1){//if you're the only hallway left and you can't dead-end
-								if(yy_s <=  hallL) action = 1;		//turn right if there is a wall to the left
-								else if(yy_e >= (grid_y - 1 - hallL))	action = 2; 				//if there is a wall to the right turn right
-								else if(prob > 0.5) action = 1; //turn left
-								else action = 2;  //turn right
-							} else{		//can dead end
-								if(prob > 0.66) action = 6;  //dead end
-								else if( prob > 0.33){	//turn left
-									action = 1;
-									if(yy_e >= (grid_y - 1 - hallL))	action = 2;
-									
-								} else{ //turn right
-									action = 2;
-									if(yy_s <=  hallL) action = 1;
-								}
-							}				
-						}
-						
-						if(action == 0){
-							double prob = rand.nextDouble();
-							if(prob < 0.01){
-								//dead end
-								if(hallway_stack.size() == 1)
-									action = 0;
-								else
-									action  = 6;
-							} /*else if (prob < 0.06){
-								//fork
-								if(hallway_stack.get(ii).end.x >= (grid.size() - 1 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 4;
-								else if((hallway_stack.get(ii).start.x <= (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 3;
-								else if(prob < 0.011)
-									action = 5;
-								else if(prob < 0.035)
-									action = 3;
-								else
-									action = 4;
-							}*/ else if(prob < 0.11){
-								//turn
-								if(hallway_stack.get(ii).end.x >= (grid.size() - 1 - (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 2;
-								else if((hallway_stack.get(ii).start.x <= (Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE)))
-									action = 1;
-								else if(prob < 0.085)
-									action = 1;
-								else
-									action = 2;
-							}
-							else if(prob < 0.21){
-								//room
-								//TODO:make room code
-								action = 0;
-							}
-						}
-						
-						
-						//generation
-						switch(action){
-							case 0:	//move forward
-								for(int kk = 0; kk < hallL; kk++){
-									grid.get(xx_s+1).set(yy_s+kk, 2);
-								}
-								hallway_stack.get(ii).start.x = xx_s+1;
-								hallway_stack.get(ii).end.x = xx_e+1;
-								break;
-							case 1:	//turn left
-								for(int jj = 1; jj <= hallL; jj++){
-									for(int kk = 0; kk <= hallL; kk++){
-										grid.get(xx_s+jj).set(yy_s+kk, 2);
-									}
-								}
-								
-								hallway_stack.get(ii).start.x = xx_s + 1;
-								hallway_stack.get(ii).start.y = yy_s + hallL;
-								hallway_stack.get(ii).end.x = xx_s + hallL;
-								hallway_stack.get(ii).end.y = yy_s + hallL;
-								hallway_stack.get(ii).direction = 0;
-								break;
-							case 2:	//turn right
-								for(int jj = 1; jj <= hallL; jj++){
-									for(int kk = -1; kk < hallL; kk++){
-										grid.get(xx_s+jj).set(yy_s+kk, 2);
-									}
-								}
-								
-								hallway_stack.get(ii).start.x = xx_s + 1;
-								hallway_stack.get(ii).start.y = yy_s - 1;
-								hallway_stack.get(ii).end.x = xx_s + hallL;
-								hallway_stack.get(ii).end.y = yy_s - 1;
-								hallway_stack.get(ii).direction = 0;
-						}
-						
-					break;				
-				}
-			}
+		//generate start position
+		int pos;
+		switch(rand.nextInt(4)){
+			case Def.UP:
+				pos = rand.nextInt(grid_x - (hallL - 1)) + (hallL-1)/2;
+				for(int ii = pos - (hallL-1)/2; ii <= pos + (hallL-1)/2; ii++)
+					grid.get(0).set(ii, Def.MOVABLE_AREA_CODE);
+				break;
+			case Def.DOWN:
+				pos = rand.nextInt(grid_x - (hallL - 1)) + (hallL-1)/2;
+				for(int ii = pos - (hallL-1)/2; ii <= pos + (hallL-1)/2; ii++)
+					grid.get(grid_x-1).set(ii, Def.MOVABLE_AREA_CODE);
+				break;
+			case Def.RIGHT:
+				pos = rand.nextInt(grid_y - (hallL - 1)) + (hallL-1)/2;
+				for(int ii = pos - (hallL-1)/2; ii <= pos + (hallL-1)/2; ii++)
+					grid.get(ii).set(grid_y - 1, Def.MOVABLE_AREA_CODE);
+				break;
+			case Def.LEFT:
+				pos = rand.nextInt(grid_y - (hallL - 1)) + (hallL-1)/2;
+				for(int ii = pos - (hallL-1)/2; ii <= pos + (hallL-1)/2; ii++)
+					grid.get(ii).set(0 , Def.MOVABLE_AREA_CODE);
+				break;		
 		}
 		
 		

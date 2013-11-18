@@ -33,14 +33,18 @@ public class Def {
 	public static final int CURRENTLY_SEARCHING_AREA_CODE = 8;
 	public static final int PATH_CODE = 9;
 	
+	public static final int UP = 0;
+	public static final int RIGHT = 1;
+	public static final int DOWN = 2;
+	public static final int LEFT = 3;
 	
 	public static final String LOG_FILE_PATH = "log.txt";
 	public static final int FRAME_SIZE_X = 1000;
 	public static final int FRAME_SIZE_Y = 1000;
 	public static final int MAP_SIZE_PIXELS_X = 800;
 	public static final int MAP_SIZE_PIXELS_Y = 800;
-	public static final int MAP_SIZE_FT_X = 80;
-	public static final int MAP_SIZE_FT_Y = 80;
+	public static final int MAP_SIZE_FT_X = 200;
+	public static final int MAP_SIZE_FT_Y = 200;
 	public static final int FT_PER_SQUARE = 2;
 
 	

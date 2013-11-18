@@ -34,18 +34,18 @@ public class main_test {
 			Def.output(bw, String.format("Started creating map at %dms\r\n", System.currentTimeMillis() - time_start));
 			time_elapsed = System.currentTimeMillis();
 			Map new_map = new Map(bw);
-			//new_map.generate(0);
-			new_map.load_map(Def.SAMPLE_MAP_1);
+			new_map.generate(0);
+			//new_map.load_map(Def.SAMPLE_MAP_1);
 			new_map.printMap();  //prints map to map.txt
 			Def.output(bw, String.format("Finished creating map at %dms. Time elapsed: %dms\r\n", System.currentTimeMillis() - time_start, System.currentTimeMillis() - time_elapsed));
 			
-			/*
+			
 			Def.output(bw, String.format("Started creating gui at %dms\r\n", System.currentTimeMillis() - time_start));
 			time_elapsed = System.currentTimeMillis();
 			GUI gg = new GUI(bw, new_map);
 			new_map.attachGUI(gg);
 			Def.output(bw, String.format("Finished creating gui at %dms. Time elapsed: %dms\r\n", System.currentTimeMillis() - time_start, System.currentTimeMillis() - time_elapsed));
-
+			/*
 			Def.output(bw, String.format("Started creating copter at %dms\r\n", System.currentTimeMillis() - time_start));
 			time_elapsed = System.currentTimeMillis();
 			Quadcopter copter = new Quadcopter(bw, new_map, gg);
