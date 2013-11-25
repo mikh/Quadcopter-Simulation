@@ -133,13 +133,13 @@ public class Map {
 	}
 	
 	public void generate(int seed) throws IOException{
-		log.write("Generating map...\r\n");
+		Def.output(log, "Generating map...\r\n");
 		Random rand = new Random(seed);
 		
 		int grid_x = grid.size(), grid_y = grid.get(0).size();
 		int hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE;
 		
-		//first create border
+		/*******first create border******/
 		for(int ii = 0; ii < grid_x; ii++){
 			if(ii == 0 || ii == grid_x - 1){
 				for(int jj = 0; jj < grid_y; jj++)
@@ -151,7 +151,7 @@ public class Map {
 			}
 		}
 		
-		//generate start position
+		/*******generate start position*****/
 		int pos;
 		switch(rand.nextInt(4)){
 			case Def.UP:
@@ -175,6 +175,66 @@ public class Map {
 					grid.get(ii).set(0 , Def.MOVABLE_AREA_CODE);
 				break;		
 		}
+		
+		/******generate rooms*****/	
+		ArrayList<room> rooms = new ArrayList<room>();
+		
+		//convert room size in ft into squares
+		int min_size = Def.MINIMUM_SIZE_OF_ROOM_FT/Def.FT_PER_SQUARE;
+		int max_size = Def.MAXIMUM_SIZE_OF_ROOM_FT/Def.FT_PER_SQUARE;
+		
+		//generate each room
+		for(int ii = 0; ii < Def.NUMBER_OF_ROOMS; ii++){
+			Point start = new Point(0,0), end = new Point(0, 0);
+			boolean coords_pass = false;
+			
+			//try coordinates until you get valid ones
+			while(!coords_pass){
+				//room must be at a minimum 3x3 grid
+				int start_x = rand.nextInt(grid_x-4) + 1;
+				int start_y = rand.nextInt(grid_y-4) + 1;
+			
+				int end_x = start_x + (rand.nextInt(max_size-min_size) + min_size);
+				int end_y = start_y + (rand.nextInt(max_size-min_size) + min_size);
+				if(end_x >= grid_x) end_x = grid_x-2;
+				if(end_y >= grid_y) end_y = grid_y-2;
+				
+				start = new Point(start_x, start_y);
+				end = new Point(end_x, end_y);
+				Point a = new Point(start_x, end_y);
+				Point b = new Point(end_x, start_y);
+				
+				//check coords
+				coords_pass = true;
+				for(int jj = 0; jj < rooms.size(); jj++){
+					room rm = rooms.get(jj);
+					if(!Def.point_within_range(start, rm.start, rm.end, 1)){ coords_pass = false; break;}
+					if(!Def.point_within_range(end, rm.start, rm.end, 1)){ coords_pass = false; break;}
+					if(!Def.point_within_range(a, rm.start, rm.end, 1)){ coords_pass = false; break;}
+					if(!Def.point_within_range(b, rm.start, rm.end, 1)){ coords_pass = false; break;}
+					if(!Def.point_within_range(rm.start, start, end, 1)){ coords_pass = false; break;}
+					if(!Def.point_within_range(rm.end, start, end, 1)){ coords_pass = false; break;}
+					if(!Def.point_within_range(new Point(rm.start.x, rm.end.y), start, end, 1)){ coords_pass = false; break;}
+					if(!Def.point_within_range(new Point(rm.end.x, rm.start.y), start, end, 1)){ coords_pass = false; break;}
+				}
+			}
+			
+			//if coords pass, make the room
+			for(int jj = start.x; jj <= end.x; jj++){
+				for(int kk = start.y; kk <= end.y; kk++){
+					grid.get(jj).set(kk, Def.MOVABLE_AREA_CODE);
+				}
+			}
+			room new_room = new room(0, start, end);
+			rooms.add(new_room);
+			
+			Def.output(log, String.format("Creating room between (%d,%d) and (%d,%d)\r\n", start.x, start.y, end.x, end.y));
+			
+		}
+		
+		
+		/****** generate Hallways *****/
+		
 		
 		
 	}

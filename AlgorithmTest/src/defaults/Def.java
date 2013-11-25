@@ -59,7 +59,7 @@ public class Def {
 	public static final Color PATH_COLOR = new Color(0, 0, 255);		//red1
 
 	public static final int HALLWAY_LENGTH_FT = 6;	//if this isn't a multiple of ft/square then crash
-	public static final int NUMBER_OF_ROOMS = 6;
+	public static final int NUMBER_OF_ROOMS = 8;
 	public static final int NUMBER_OF_SURVIVORS = 10;
 	public static final int MINIMUM_SIZE_OF_ROOM_FT = 10;		//has to match with ft/square
 	public static final int MAXIMUM_SIZE_OF_ROOM_FT = 50;		//has to match with ft/sq
@@ -109,4 +109,6 @@ public class Def {
 	public static int round(double val){ return ((val%1) >= 0.50) ? (int)(Math.ceil(val)) : (int)(Math.floor(val));}
 	
 	public static void output(BufferedWriter bw, String str) throws IOException{ bw.write(str); System.out.print(str); }
+
+	public static boolean point_within_range(Point x, Point start, Point end, int offset){ if((x.x >= start.x - offset && x.x <= end.x + offset) && (x.y >= start.y - offset && x.y <= end.y + offset)) return false; return true;}
 }
