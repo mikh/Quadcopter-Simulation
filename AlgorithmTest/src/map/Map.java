@@ -153,31 +153,42 @@ public class Map {
 		
 		/*******generate start position*****/
 		int pos;
+		Point start_pos_start = new Point(0,0), start_pos_end = new Point(0,0);
 		switch(rand.nextInt(4)){
 			case Def.UP:
 				pos = rand.nextInt(grid_x - (hallL - 1)) + (hallL-1)/2;
+				start_pos_start = new Point(0, pos-(hallL-1)/2);
+				start_pos_end = new Point(0, pos + (hallL-1)/2);
 				for(int ii = pos - (hallL-1)/2; ii <= pos + (hallL-1)/2; ii++)
 					grid.get(0).set(ii, Def.MOVABLE_AREA_CODE);
 				break;
 			case Def.DOWN:
 				pos = rand.nextInt(grid_x - (hallL - 1)) + (hallL-1)/2;
+				start_pos_start = new Point(grid_x-1, pos-(hallL-1)/2);
+				start_pos_end = new Point(grid_x-1, pos+(hallL-1)/2);
 				for(int ii = pos - (hallL-1)/2; ii <= pos + (hallL-1)/2; ii++)
 					grid.get(grid_x-1).set(ii, Def.MOVABLE_AREA_CODE);
 				break;
 			case Def.RIGHT:
 				pos = rand.nextInt(grid_y - (hallL - 1)) + (hallL-1)/2;
+				start_pos_start = new Point(pos - (hallL-1)/2, grid_y-1);
+				start_pos_end = new Point(pos + (hallL-1)/2, grid_y-1);
 				for(int ii = pos - (hallL-1)/2; ii <= pos + (hallL-1)/2; ii++)
 					grid.get(ii).set(grid_y - 1, Def.MOVABLE_AREA_CODE);
 				break;
 			case Def.LEFT:
 				pos = rand.nextInt(grid_y - (hallL - 1)) + (hallL-1)/2;
+				start_pos_start= new Point(pos - (hallL-1)/2, 0);
+				start_pos_end = new Point(pos + (hallL-1)/2, 0);
 				for(int ii = pos - (hallL-1)/2; ii <= pos + (hallL-1)/2; ii++)
 					grid.get(ii).set(0 , Def.MOVABLE_AREA_CODE);
 				break;		
 		}
+		room start_position_room = new room(0, 1, start_pos_start, start_pos_end);
 		
 		/******generate rooms*****/	
 		ArrayList<room> rooms = new ArrayList<room>();
+		rooms.add(start_position_room);
 		
 		//convert room size in ft into squares
 		int min_size = Def.MINIMUM_SIZE_OF_ROOM_FT/Def.FT_PER_SQUARE;
@@ -225,18 +236,353 @@ public class Map {
 					grid.get(jj).set(kk, Def.MOVABLE_AREA_CODE);
 				}
 			}
-			room new_room = new room(0, start, end);
+			room new_room = new room(ii+1, 0, start, end);
 			rooms.add(new_room);
 			
 			Def.output(log, String.format("Creating room between (%d,%d) and (%d,%d)\r\n", start.x, start.y, end.x, end.y));
 			
 		}
 		
+		/****** generate Hallways *******/
+		boolean fully_connected = false;
+		while(!fully_connected){
+			int ii;
+			for(ii = 0; ii < rooms.size(); ii++){
+				if(rooms.get(ii).connected_to.size() == 0)
+					break;
+			}
+			if(ii == rooms.size())
+				fully_connected = true;
+			else{
+				
+			}
+		}
 		
-		/****** generate Hallways *****/
+		/****** generate Hallways ****
+		 * I. find origin point and make list of untouched rooms
+		 * II. Create hallway at origin point
+		 * III. Hallway should path to closest untouched room.
+		 * IV. Build path. Chance of forking
+		 * V. If path hasn't forked, make a path from current room
+		 * VI. Repeat until all rooms are connected, any extra paths can dead end.
+		 */
+		//Part I
+		//using Point start_pos_start and Point start_pos_end
+		//finding the closest room is more of a heuristic at this point. I don't think doing it one way or another makes much difference.
+		
+		//Part II
+		
+		//need to get the direction of the hallway
+		//if x = 0 then RIGHT, if x = grid_x-1 then LEFT, if y = 0 then DOWN, if y = grid_y-1 then UP
+
+		
+		int rm = find_closest_untouched_room(rooms, start_pos_start);
+		if(rm == -1){	//All rooms touched
+			
+		} else{
+			
+			//first find the hallway direction
+			int direction = Def.UP;
+			if(start_pos_start.x == 0)
+				direction = Def.RIGHT;
+			else if(start_pos_start.x == grid_x-1)
+				direction = Def.LEFT;
+			else if(start_pos_start.y == 0)
+				direction = Def.DOWN;
+			else if(start_pos_start.y == grid_y-1)
+				direction = Def.UP;
+			
+			//now get the entrance to the room
+				
+			
+			
+			
+		}
 		
 		
 		
+	}
+
+	
+	public int find_closest_room(ArrayList<room> rooms, int cur_room){
+		
+	}
+	
+	/**
+	 * Finds the closest room to a position
+	 * @param pos - position of path
+	 * @return index to the ArrayList<room>
+	 */
+	public int find_closest_room_to_position(ArrayList<room> rooms, Point pos){
+		int min = -1;
+		double min_length = -1;
+		
+		for(int ii = 0; ii < rooms.size(); ii++){
+			ArrayList<Point> points = new ArrayList<Point>();
+			points.add(new Point(rooms.get(ii).start.x, rooms.get(ii).start.y));
+			points.add(new Point(rooms.get(ii).end.x, rooms.get(ii).end.y));
+			points.add(new Point(rooms.get(ii).start.x, rooms.get(ii).end.y));
+			points.add(new Point(rooms.get(ii).end.x, rooms.get(ii).start.y));
+			 
+			for(int jj = 0; jj < points.size(); jj++){
+				double dist = Def.get_distance(pos, points.get(jj));
+				if(min_length == -1 || min_length > dist){
+					min_length = dist;
+					min = ii;
+				}
+			}				
+			
+		}
+		
+		return min;
+	}
+	
+	/**
+	 * Finds the closest room that has been untouched
+	 * @param pos - position of path
+	 * @return index to the ArrayList<room>
+	 */
+	public int find_closest_untouched_room(ArrayList<room> rooms, Point pos){
+		int min = -1;
+		double min_length = -1;
+		
+		for(int ii = 0; ii < rooms.size(); ii++){
+			if(rooms.get(ii).accessed == false){
+				ArrayList<Point> points = new ArrayList<Point>();
+				points.add(new Point(rooms.get(ii).start.x, rooms.get(ii).start.y));
+				points.add(new Point(rooms.get(ii).end.x, rooms.get(ii).end.y));
+				points.add(new Point(rooms.get(ii).start.x, rooms.get(ii).end.y));
+				points.add(new Point(rooms.get(ii).end.x, rooms.get(ii).start.y));
+				 
+				for(int jj = 0; jj < points.size(); jj++){
+					double dist = Def.get_distance(pos, points.get(jj));
+					if(min_length == -1 || min_length > dist){
+						min_length = dist;
+						min = ii;
+					}
+				}				
+			}
+		}
+		
+		return min;
+	}
+	
+	/**
+	 * Finds the closest face of the room that faces the point 
+	 * @param rm 
+	 * @param pos
+	 * @return 
+	 */
+	public int find_closest_face(room rm, Point pos){
+		int face = Def.UP;
+		ArrayList<Point> points = new ArrayList<Point>();
+		points.add(new Point(rm.start.x, rm.start.y));
+		points.add(new Point(rm.end.x, rm.end.y));
+		points.add(new Point(rm.start.x, rm.end.y));
+		points.add(new Point(rm.end.x, rm.start.y));
+		
+		//Up is 0 and 3, right is 3 and 1, down is 2 and 1, left is 0 and 2
+		
+		int min_1 = 0, min_2 = 3;
+		double dist_1 = -1, dist_2 = -1;
+		
+		for(int ii = 0; ii < points.size(); ii++){
+			double dist = Def.get_distance(points.get(ii), pos);
+			if(dist_1 == -1 || dist_1 > dist){
+				min_1 = ii;
+				dist_1 = dist;
+			}
+			else if(dist_2 == -1 || dist_2 > dist){
+				min_2 = ii;
+				dist_2 = dist;
+			}
+		}
+		
+		if((min_1 == 0 && min_2 == 3) || (min_1 == 3 && min_2 == 0)) face = Def.UP;
+		else if((min_1 == 3 && min_2 == 1) || (min_1 == 1 && min_2 == 3)) face = Def.RIGHT;
+		else if((min_1 == 2 && min_2 == 1) || (min_1 == 1 && min_2 == 2)) face = Def.DOWN;
+		else if((min_1 == 0 && min_2 == 2) || (min_1 == 2 && min_2 == 0)) face = Def.LEFT;
+		
+		return face;
+	}
+	
+	public void make_path(ArrayList<room> rooms, int cur_room, Point hall_start, Point hall_end, Random rand, int direction) throws IOException{
+		int grid_x = grid.size(), grid_y = grid.get(0).size(), hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE;
+		
+		//find the closest room
+		
+	}
+	
+	/*
+	public hallway make_path(ArrayList<room> rooms, int cur_room, Point hall_start, Point hall_end, Random rand, int direction) throws IOException{
+		int grid_x = grid.size(), grid_y = grid.get(0).size(), hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE;
+		
+		//This is a function of the hallway direction, as well as any room that may be in the way
+		int face = find_closest_face(rooms.get(cur_room), hall_start);
+		Point entrace = find_room_entrance_point(rooms.get(cur_room), face, rand);
+		int facee = -1;
+		while(entrace.x == -1 && entrace.y == -1){
+			entrace = find_room_entrance_point(rooms.get(cur_room), ++facee, rand);
+		}
+		if(facee != -1) face = facee;		
+			
+		//if directions are opposite then it is easy, otherwise, youll have to do some magic
+		
+		ArrayList<Point> path = new ArrayList<Point>();
+		ArrayList<Point> end_path = new ArrayList<Point>();
+		
+		if(Def.directions_opposite(face, direction)){
+			//first extend the entrance a little - runs under the assumption that you wont collide
+			for(int ii = 0; ii < hallL; ii++){
+				Point next = Def.getNextPoint(hall_start, direction);
+				if(grid.get(next.x).get(next.y) != 0){	//collision
+					//TODO: Deal with collision
+					Def.output(log, "COLLLISION!!!!");
+				}
+				path.add(next);
+				hall_start = next;
+			}
+			
+			//then extend the exit a little - again assuming no collision
+			for(int ii = 0; ii < hallL; ii++){
+				Point next = Def.getNextPoint(entrace, face);
+				if(grid.get(next.x).get(next.y) != 0){	//collision
+					//TODO: Deal with collision
+					Def.output(log, "COLLLISION!!!!");
+				}
+				end_path.add(next);
+				entrace = next;
+			}
+			
+			
+			boolean connected = false;
+			
+			while(!connected){
+				//first find the difference between x and y
+				int diff_x = entrace.x - hall_start.x;
+				int diff_y = entrace.y - hall_start.y;
+				
+				//attempt to move first all x and then all y
+				int x_direction, y_direction;
+				if(diff_x < 0) x_direction = Def.LEFT;
+				else x_direction = Def.RIGHT;
+				if(diff_y < 0) y_direction = Def.UP;
+				else y_direction = Def.DOWN;
+				
+				ArrayList<Point> temp_path = new ArrayList<Point>();
+				Point next = Def.getNextPoint(hall_start, x_direction);
+				connected = true;
+				while(next.x != entrace.x){
+					Point next_check = Def.getNextPoint(next, x_direction);
+					if(grid.get(next_check.x).get(next_check.y) == 0)
+						next = next_check;
+					else{
+						boolean detour = false;
+						while(!detour){
+							next_check = Def.getNextPoint(next, y_direction);
+							if(next_check.y > entrace.y || grid.get(next_check.x).get(next_check.y) != 0){
+								detour = true;
+								connected = false;
+								next.x = entrace.x;
+							}
+							else{
+								temp_path.add(next_check);
+								next = next_check;
+								next_check = Def.getNextPoint(next, x_direction);
+								if(grid.get(next_check.x).get(next_check.y) == 0)
+									detour = true;
+							}
+						}
+						
+					}
+				}
+			}
+			
+			
+		} else if(face != direction){	//easy fix, just do a little extension from the face, and then connect to that
+			
+		} else{		//not good at all
+			
+		}
+		
+		
+	}
+	*/
+	/**
+	 * Finds the entrance point to the room, and returns the smallest point of that entrance
+	 * @param rm
+	 * @param face
+	 * @param rand
+	 * @return
+	 */
+	private Point find_room_entrance_point(room rm, int face, Random rand){
+		Point pt1, pt2;
+		int length;
+		if(face == Def.UP){
+			pt1 = new Point(rm.start.x, rm.start.y);
+			pt2 = new Point(rm.end.x, rm.start.y);
+			length = pt2.x - pt1.x;
+		}
+		else if(face == Def.RIGHT){
+			pt1 = new Point(rm.end.x, rm.start.y);
+			pt2 = new Point(rm.end.x, rm.end.y);
+			length = pt2.y - pt1.y;
+		}
+		else if(face == Def.LEFT){
+			pt1 = new Point(rm.start.x, rm.start.y);
+			pt2 = new Point(rm.start.x, rm.end.y);
+			length = pt2.y - pt2.x;
+		}
+		else{
+			pt2 = new Point(rm.end.x, rm.end.y);
+			pt1 = new Point(rm.start.x, rm.end.y);
+			length = pt2.x - pt1.x;
+		}
+		
+		int attempts = 0, hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE;
+		
+		while(attempts < Def.TRY_ATTEMPTS){
+			int offset = rand.nextInt(length - hallL);
+			
+			
+			if(face == Def.UP){
+				if(pt1.y > hallL && grid.get(pt1.x + offset).get(pt1.y - hallL) == 0)
+					return new Point(pt1.x + offset, pt1.y);
+			}
+			else if(face == Def.DOWN){
+				if(pt1.y < grid.get(0).size() - hallL - 1 && grid.get(pt1.x + offset).get(pt1.y + (hallL-1)) == 0)
+					return new Point(pt1.x + offset, pt1.y);
+			}
+			else if(face == Def.RIGHT){
+				if(pt1.x < grid.size() - hallL - 1 && grid.get(pt1.x + hallL - 1).get(pt1.y + offset) == 0)
+					return new Point(pt1.x, pt1.y + offset);
+			}
+			else if(face == Def.LEFT){
+				if(pt1.x > hallL && grid.get(pt1.x - hallL).get(pt1.y + offset) == 0)
+					return new Point(pt1.x, pt1.y + offset);
+			}
+			attempts++;
+		}
+		
+		for(int offset = 0; offset < length - hallL; offset++){
+			if(face == Def.UP){
+				if(pt1.y > hallL && grid.get(pt1.x + offset).get(pt1.y - hallL) == 0)
+					return new Point(pt1.x + offset, pt1.y);
+			}
+			else if(face == Def.DOWN){
+				if(pt1.y < grid.get(0).size() - hallL - 1 && grid.get(pt1.x + offset).get(pt1.y + (hallL-1)) == 0)
+					return new Point(pt1.x + offset, pt1.y);
+			}
+			else if(face == Def.RIGHT){
+				if(pt1.x < grid.size() - hallL - 1 && grid.get(pt1.x + hallL - 1).get(pt1.y + offset) == 0)
+					return new Point(pt1.x, pt1.y + offset);
+			}
+			else if(face == Def.LEFT){
+				if(pt1.x > hallL && grid.get(pt1.x - hallL).get(pt1.y + offset) == 0)
+					return new Point(pt1.x, pt1.y + offset);
+			}
+		}
+		return new Point(-1, -1);		
 	}
 	
 	/**
@@ -360,13 +706,19 @@ class hallway{
  *
  */
 class room{
+	public int ID;
 	public int doors;
 	public Point start;
 	public Point end;
+	public boolean accessed;
+	public ArrayList<Integer> connected_to;
 	
-	public room(int doors, Point start, Point end){
+	public room(int ID, int doors, Point start, Point end){
+		this.ID = ID;
 		this.doors = doors;
 		this.start = start;
 		this.end = end;
+		this.accessed = false;
+		this.connected_to = new ArrayList<Integer>();
 	}
 }

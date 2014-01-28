@@ -74,13 +74,15 @@ public class Def {
 	
 	public static final int SAMPLE_MAP_1 = 653042;
 
+	public static final int TRY_ATTEMPTS = 100;
+	
 	//Quadcopter
 	public static final int NUMBER_OF_SENSORS = 16;		//can be 8 or 16
 	public static final int SENSOR_RANGE_FT = 8;		//anything else may have undefined results
 	
 	public static final int INTERNAL_VIEW_X_PX = 200;
 	public static final int INTERNAL_VIEW_Y_PX = 200;
-	
+
 	
 	//sensor macros
 	public static Point SENSOR_SCAN(Point base, int distance, int sensor){
@@ -111,4 +113,10 @@ public class Def {
 	public static void output(BufferedWriter bw, String str) throws IOException{ bw.write(str); System.out.print(str); }
 
 	public static boolean point_within_range(Point x, Point start, Point end, int offset){ if((x.x >= start.x - offset && x.x <= end.x + offset) && (x.y >= start.y - offset && x.y <= end.y + offset)) return false; return true;}
+
+	public static double get_distance(Point a, Point b){return Math.sqrt(Math.pow((double)(Math.abs(a.x - b.x)), 2.0) + Math.pow((double)(Math.abs(a.y-b.y)), 2));}
+
+	public static boolean directions_opposite(int dir1, int dir2){if((dir1 == Def.UP && dir2 == Def.DOWN) || (dir2 == Def.UP && dir1 == Def.DOWN) || (dir1 == Def.RIGHT && dir2 == Def.LEFT) || (dir2 == Def.RIGHT && dir1 == Def.LEFT)) return true; return false;}
+
+	public static Point getNextPoint(Point pt, int direction){if(direction == UP) return new Point(pt.x, pt.y-1); else if(direction == DOWN) return new Point(pt.x, pt.y + 1); else if(direction == RIGHT) return new Point(pt.x+1, pt.y); else if(direction == LEFT) return new Point(pt.x-1, pt.y); return new Point(-1,-1);}
 }
