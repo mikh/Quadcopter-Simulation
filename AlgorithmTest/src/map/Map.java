@@ -343,11 +343,11 @@ public class Map {
 				int var_parameter_min = 0, var_parameter_max = 0, var_parameter_set = 0;
 				
 				if(x_const){
-					var_parameter_max = Math.abs(cur_side.get(0).y-(cur_side.get(1).y + 1)) - hallL + 1;	//has to be inset
-					var_parameter_min = ((cur_side.get(0).y < cur_side.get(1).y) ? cur_side.get(0).y : cur_side.get(1).y); 
+					var_parameter_max = Math.abs(cur_side.get(0).y-cur_side.get(1).y) - hallL - 1;	//has to be inset
+					var_parameter_min = ((cur_side.get(0).y < cur_side.get(1).y) ? cur_side.get(0).y+1 : cur_side.get(1).y+1); 
 				} else{
-					var_parameter_max = Math.abs(cur_side.get(0).x-(cur_side.get(1).x + 1)) - hallL + 1;
-					var_parameter_min = ((cur_side.get(0).x < cur_side.get(1).x) ? cur_side.get(0).x : cur_side.get(1).x); 
+					var_parameter_max = Math.abs(cur_side.get(0).x-cur_side.get(1).x) - hallL - 1;
+					var_parameter_min = ((cur_side.get(0).x < cur_side.get(1).x) ? cur_side.get(0).x+1 : cur_side.get(1).x+1); 
 				}
 				
 				//if start location is not big enough, fail side
@@ -440,6 +440,7 @@ public class Map {
 								for(int ww = Def.min(start_range.y, end_range.y); ww <= Def.max(start_range.y, end_range.y); ww++){
 									if(grid.get(qq).get(ww) != Def.UNASSIGNED_CODE)
 										open_found = false;
+									update(qq,ww,Def.CURRENTLY_SENSING_AREA_CODE);
 								}
 							}
 						 }
@@ -449,26 +450,26 @@ public class Map {
 							
 							if(x_direction && increment){
 								for(int qq = 0; qq < hallL; qq++){
-									update(gp.x, gp.y+qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
-									entrance.add(new Point(gp.x, gp.y+qq));
-								}
-							}
-							else if(x_direction && !increment){
-								for(int qq = 0; qq < hallL; qq++){
 									update(gp.x, gp.y-qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
 									entrance.add(new Point(gp.x, gp.y-qq));
 								}
 							}
+							else if(x_direction && !increment){
+								for(int qq = 0; qq < hallL; qq++){
+									update(gp.x, gp.y+qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
+									entrance.add(new Point(gp.x, gp.y+qq));
+								}
+							}
 							else if(!x_direction && increment){
 								for(int qq = 0; qq < hallL; qq++){
-									update(gp.x+qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-									entrance.add(new Point(gp.x+qq, gp.y));
+									update(gp.x-qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
+									entrance.add(new Point(gp.x-qq, gp.y));
 								}
 							}
 							else if(!x_direction && !increment){
 								for(int qq = 0; qq < hallL; qq++){
-									update(gp.x-qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-									entrance.add(new Point(gp.x-qq, gp.y));
+									update(gp.x+qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
+									entrance.add(new Point(gp.x+qq, gp.y));
 								}
 							}
 							break;

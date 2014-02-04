@@ -1,0 +1,21 @@
+Starting Test at Tue Feb 04 13:35:02 EST 2014
+
+Test Initialization Phase
+Started creating gui at 0ms
+Finished creating gui at 1ms. Time elapsed: 0ms
+Started creating map at 1ms
+Map construction initiated
+Found square size in pixels. x = 100px y = 100px
+Creating Frame.
+Obtaining number of squares...	100x100
+Obtaining pixels per square...	8x8
+Generating map...
+Creating room between (62,96) and (82,98)
+Creating room between (60,34) and (84,53)
+Creating room between (54,6) and (72,13)
+Creating room between (24,45) and (33,65)
+Creating room between (90,57) and (98,70)
+Creating room between (45,60) and (62,65)
+Creating room between (12,3) and (35,19)
+Creating room between (40,20) and (52,33)
+Finished creating map at 4159ms. Time elapsed: 4158ms
