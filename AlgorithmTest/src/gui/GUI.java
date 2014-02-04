@@ -258,6 +258,12 @@ class square extends JComponent{
 				case 9:
 					g.setColor(Def.SENSED_AND_SEARCHED_AREA_COLOR);
 					break;
+				case 10:
+					g.setColor(Def.PATH_COLOR);
+					break;
+				case 11:
+					g.setColor(Def.CUSTOM_COLOR);
+					break;
 				default:
 					g.setColor(Color.WHITE);
 					break;

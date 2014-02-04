@@ -30,3 +30,5 @@ segments_1
 *.running
 javaLikeNames.txt
 savedIndexNames.txt
+*.png
+*.jpg

@@ -32,6 +32,8 @@ public class Def {
 	public static final int CURRENTLY_SENSING_AREA_CODE = 7;
 	public static final int CURRENTLY_SEARCHING_AREA_CODE = 8;
 	public static final int PATH_CODE = 9;
+	public static final int CUSTOM_COLOR_1 = 10;
+	public static final int CUSTOM_COLOR_2 = 11;
 	
 	public static final int UP = 0;
 	public static final int RIGHT = 1;
@@ -56,7 +58,9 @@ public class Def {
 	public static final Color SENSED_AND_SEARCHED_AREA_COLOR = new Color(0, 104, 139);	//deepskyblue4
 	public static final Color /* CURRENTLY_SENSING_AREA_COLOR = new Color(135, 206, 255);	//skyblue1*/ CURRENTLY_SENSING_AREA_COLOR = new Color(0, 104, 139);	//deepskyblue4
 	public static final Color CURRENTLY_SEARCHING_AREA_COLOR = new Color(255, 255, 0);	//yellow
-	public static final Color PATH_COLOR = new Color(0, 0, 255);		//red1
+	public static final Color PATH_COLOR = new Color(0, 0, 255);		//blue1
+	public static final Color CUSTOM_COLOR = new Color(255, 0, 0);		//red1
+	
 
 	public static final int HALLWAY_LENGTH_FT = 6;	//if this isn't a multiple of ft/square then crash
 	public static final int NUMBER_OF_ROOMS = 8;
