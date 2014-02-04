@@ -123,4 +123,8 @@ public class Def {
 	public static boolean directions_opposite(int dir1, int dir2){if((dir1 == Def.UP && dir2 == Def.DOWN) || (dir2 == Def.UP && dir1 == Def.DOWN) || (dir1 == Def.RIGHT && dir2 == Def.LEFT) || (dir2 == Def.RIGHT && dir1 == Def.LEFT)) return true; return false;}
 
 	public static Point getNextPoint(Point pt, int direction){if(direction == UP) return new Point(pt.x, pt.y-1); else if(direction == DOWN) return new Point(pt.x, pt.y + 1); else if(direction == RIGHT) return new Point(pt.x+1, pt.y); else if(direction == LEFT) return new Point(pt.x-1, pt.y); return new Point(-1,-1);}
+
+	public static int min(int a, int b){if(a > b) return b; return a;}
+	
+	public static int max(int a, int b){if(a > b) return a; return b;}
 }

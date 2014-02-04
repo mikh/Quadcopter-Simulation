@@ -351,8 +351,7 @@ public class Map {
 				}
 				
 				//if start location is not big enough, fail side
-				if(var_parameter_max < 0)
-					side_fail = true;
+				if(var_parameter_max < 0) side_fail = true;
 				
 				if(!side_fail){
 					
@@ -360,22 +359,22 @@ public class Map {
 					int attempts = 0;
 					
 					
-					while(attempts++ < Def.TRY_ATTEMPTS){
+					while(attempts++ < Def.TRY_ATTEMPTS && !side_fail && !side_obtained){
 						open_found = false;
 						//IV: Generate a bounded start location
-							var_parameter_set = rand.nextInt(var_parameter_max + 1);
+						var_parameter_set = rand.nextInt(var_parameter_max + 1);
 						
 						//V:Create a point of that location
-							Point gp;
-							if(x_const){
-								gp = new Point(cur_side.get(0).x, var_parameter_set + var_parameter_min);
-							} else{
-								gp = new Point(var_parameter_set + var_parameter_min, cur_side.get(0).y);
-							}
+						Point gp;
+						if(x_const){
+							gp = new Point(cur_side.get(0).x, var_parameter_set + var_parameter_min);
+						} else{
+							gp = new Point(var_parameter_set + var_parameter_min, cur_side.get(0).y);
+						}
 						
 						//VI: Check point for an opening by checking one square on all sides. Only one point should exist.
-							Point location = new Point(-1,-1);
-							for(int qq = -1; qq <= 1; qq++){
+						Point location = new Point(-1,-1);
+						for(int qq = -1; qq <= 1; qq++){
 								for(int ww = -1; ww <= 1; ww++){
 									if((qq == 0 || ww == 0) && !(qq == 0 && ww == 0)){
 											System.out.print("(" + (gp.x+qq) + "," + (gp.y+ww) + ")");
@@ -392,22 +391,141 @@ public class Map {
 										}
 									}
 								}
+						}
+						
+						boolean increment = false, x_direction = false;
+						int var = 0;
+						if(gp.x == location.x){
+								var = gp.y;
+								if(gp.y < location.y)
+									increment = true;
+						} else{
+								x_direction = true;
+								var = gp.x;
+								if(gp.x < location.x)
+									increment = true;
+						 }
+						
+						//VII:Check if point out of bounds
+						side_fail = true;
+						if(increment && x_direction && var + 2 + hallL >= grid_x)
+							break;
+						if(increment && !x_direction && var + 2 + hallL >= grid_y)
+							break;
+						if(!increment && var - 2 - hallL <= 0)
+							break;
+						side_fail = false;							
+						
+						//VIII:If still good check all points
+						if(open_found){
+							Point start_range = new Point(0,0), end_range = new Point(0,0);
+							if(x_direction && increment){
+								start_range = new Point(gp.x + 1,gp.y-1);
+								end_range = new Point(gp.x + 1 + hallL + 1, gp.y + hallL);
+							}
+							else if(x_direction && !increment){
+								start_range = new Point(gp.x - 1, gp.y - 1);
+								end_range = new Point(gp.x - 1 - hallL - 1, gp.y + hallL);
+							}
+							else if(!x_direction && increment){
+								start_range = new Point(gp.x-1, gp.y+1);
+								end_range = new Point(gp.x + hallL, gp.y+1+hallL+1);
+							}
+							else if(!x_direction && !increment){
+								start_range = new Point(gp.x - 1, gp.y - 1);
+								end_range = new Point(gp.x + hallL, gp.y - 1 - hallL - 1);
+							}
+							
+							for(int qq = Def.min(start_range.x, end_range.x); qq <= Def.max(end_range.x, start_range.x); qq++){
+								for(int ww = Def.min(start_range.y, end_range.y); ww <= Def.max(start_range.y, end_range.y); ww++){
+									if(grid.get(qq).get(ww) != Def.UNASSIGNED_CODE)
+										open_found = false;
+								}
+							}
+						 }
+						//IX: If still good, make the entrance
+						if(open_found){
+							side_obtained = true;
+							
+							if(x_direction && increment){
+								for(int qq = 0; qq < hallL; qq++){
+									update(gp.x, gp.y+qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
+									entrance.add(new Point(gp.x, gp.y+qq));
+								}
+							}
+							else if(x_direction && !increment){
+								for(int qq = 0; qq < hallL; qq++){
+									update(gp.x, gp.y-qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
+									entrance.add(new Point(gp.x, gp.y-qq));
+								}
+							}
+							else if(!x_direction && increment){
+								for(int qq = 0; qq < hallL; qq++){
+									update(gp.x+qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
+									entrance.add(new Point(gp.x+qq, gp.y));
+								}
+							}
+							else if(!x_direction && !increment){
+								for(int qq = 0; qq < hallL; qq++){
+									update(gp.x-qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
+									entrance.add(new Point(gp.x-qq, gp.y));
+								}
+							}
+							break;
+						 }
+					}
+
+
+					if(!side_fail && !side_obtained){
+						for(int tt = 0; tt < var_parameter_max; tt++){
+							
+							open_found = false;
+							//IV: Generate a bounded start location
+							var_parameter_set = tt;
+							
+							//V:Create a point of that location
+							Point gp;
+							if(x_const){
+								gp = new Point(cur_side.get(0).x, var_parameter_set + var_parameter_min);
+							} else{
+								gp = new Point(var_parameter_set + var_parameter_min, cur_side.get(0).y);
+							}
+							
+							//VI: Check point for an opening by checking one square on all sides. Only one point should exist.
+							Point location = new Point(-1,-1);
+							for(int qq = -1; qq <= 1; qq++){
+									for(int ww = -1; ww <= 1; ww++){
+										if((qq == 0 || ww == 0) && !(qq == 0 && ww == 0)){
+												System.out.print("(" + (gp.x+qq) + "," + (gp.y+ww) + ")");
+											if((gp.x+qq >= 0) && (gp.x+qq < grid_x) && (gp.y+ww >= 0) && (gp.y+ww < grid_y))
+												System.out.println(" = " + grid.get(gp.x+qq).get(gp.y+ww));
+											if((gp.x+qq >= 0) && (gp.x+qq < grid_x) && (gp.y+ww >= 0) && (gp.y+ww < grid_y) && grid.get(gp.x+qq).get(gp.y+ww) == Def.UNASSIGNED_CODE){
+												if(open_found){
+													System.out.println("Algorithm fault. Extra opening exists at (" + gp.x+qq + "," + gp.y+ww + "). Centered at (" + gp.x + "," + gp.y + ")");
+													while(true);
+												} else{
+													open_found = true;
+													location = new Point(gp.x+qq, gp.y+ww);
+												}
+											}
+										}
+									}
 							}
 							
 							boolean increment = false, x_direction = false;
 							int var = 0;
 							if(gp.x == location.x){
-								var = gp.y;
-								if(gp.y < location.y)
-									increment = true;
+									var = gp.y;
+									if(gp.y < location.y)
+										increment = true;
 							} else{
-								x_direction = true;
-								var = gp.x;
-								if(gp.x < location.x)
-									increment = true;
-							}
-						
-						//VII:Check if point out of bounds
+									x_direction = true;
+									var = gp.x;
+									if(gp.x < location.x)
+										increment = true;
+							 }
+							
+							//VII:Check if point out of bounds
 							side_fail = true;
 							if(increment && x_direction && var + 2 + hallL >= grid_x)
 								break;
@@ -416,8 +534,8 @@ public class Map {
 							if(!increment && var - 2 - hallL <= 0)
 								break;
 							side_fail = false;							
-						
-						//VIII:If still good check all points
+							
+							//VIII:If still good check all points
 							if(open_found){
 								Point start_range = new Point(0,0), end_range = new Point(0,0);
 								if(x_direction && increment){
@@ -437,190 +555,70 @@ public class Map {
 									end_range = new Point(gp.x + hallL, gp.y - 1 - hallL - 1);
 								}
 								
-								for(int qq = start_range.x; qq <= end_range.x; qq++){
-									for(int ww = start_range.y; ww <= end_range.y; ww++){
+								for(int qq = Def.min(start_range.x, end_range.x); qq <= Def.max(end_range.x, start_range.x); qq++){
+									for(int ww = Def.min(start_range.y, end_range.y); ww <= Def.max(start_range.y, end_range.y); ww++){
 										if(grid.get(qq).get(ww) != Def.UNASSIGNED_CODE)
 											open_found = false;
 									}
 								}
 							 }
-						//IX: If still good, make the entrance
+							//IX: If still good, make the entrance
 							if(open_found){
 								side_obtained = true;
 								
 								if(x_direction && increment){
 									for(int qq = 0; qq < hallL; qq++){
-										grid.get(gp.x+qq).set(gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-										entrance.add(new Point(gp.x+qq, gp.y));
-									}
-								}
-								else if(x_direction && !increment){
-									for(int qq = 0; qq < hallL; qq++){
-										grid.get(gp.x-qq).set(gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-										entrance.add(new Point(gp.x-qq, gp.y));
-									}
-								}
-								else if(!x_direction && increment){
-									for(int qq = 0; qq < hallL; qq++){
 										grid.get(gp.x).set(gp.y+qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
 										entrance.add(new Point(gp.x, gp.y+qq));
 									}
 								}
-								else if(!x_direction && !increment){
+								else if(x_direction && !increment){
 									for(int qq = 0; qq < hallL; qq++){
 										grid.get(gp.x).set(gp.y-qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
 										entrance.add(new Point(gp.x, gp.y-qq));
 									}
 								}
+								else if(!x_direction && increment){
+									for(int qq = 0; qq < hallL; qq++){
+										grid.get(gp.x+qq).set(gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
+										entrance.add(new Point(gp.x+qq, gp.y));
+									}
+								}
+								else if(!x_direction && !increment){
+									for(int qq = 0; qq < hallL; qq++){
+										grid.get(gp.x-qq).set(gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
+										entrance.add(new Point(gp.x-qq, gp.y));
+									}
+								}
 								break;
-							}
-						}
-					}
-
-					if(!side_fail){
-						open_found = false;
-
-						//if not found after TRY_ATTEMPTS trials, attempt to manually select a position
-						if(!open_found){
-							for(int rr = 0; rr <= var_parameter_max; rr++){
-								//IV: Generate a bounded start location
-									var_parameter_set = rr;
-								
-								//V:Create a point of that location
-									Point gp;
-									if(x_const){
-										gp = new Point(cur_side.get(0).x, var_parameter_set + var_parameter_min);
-									} else{
-										gp = new Point(var_parameter_set + var_parameter_min, cur_side.get(0).y);
-									}
-								
-								//VI: Check point for an opening by checking one square on all sides. Only one point should exist.
-									Point location = new Point(-1,-1);
-									for(int qq = -1; qq <= 1; qq++){
-										for(int ww = -1; ww <= 1; ww++){
-											if((qq == 0 || ww == 0) && !(qq == 0 && ww == 0)){
-												if(grid.get(gp.x+qq).get(gp.y+ww) == Def.UNASSIGNED_CODE){
-													if(open_found){
-														System.out.println("Algorithm fault. Extra opening exists at (" + gp.x+qq + "," + gp.y+ww + "). Centered at (" + gp.x + "," + gp.y + ")");
-														while(true);
-													} else{
-														open_found = true;
-														location = new Point(gp.x+qq, gp.y+ww);
-													}
-												}
-											}
-										}
-									}
-									
-									boolean increment = false, x_direction = false;
-									int var = 0;
-									if(gp.x == location.x){
-										var = gp.y;
-										if(gp.y < location.y)
-											increment = true;
-									} else{
-										x_direction = true;
-										var = gp.x;
-										if(gp.x < location.x)
-											increment = true;
-									}
-								
-								//VII:Check if point out of bounds
-									side_fail = true;
-									if(increment && x_direction && var + 2 + hallL >= grid_x)
-										break;
-									if(increment && !x_direction && var + 2 + hallL >= grid_y)
-										break;
-									if(!increment && var - 2 - hallL <= 0)
-										break;
-									side_fail = false;							
-								
-								//VIII:If still good check all points
-									if(open_found){
-										Point start_range = new Point(0,0), end_range = new Point(0,0);
-										if(x_direction && increment){
-											start_range = new Point(gp.x + 1,gp.y-1);
-											end_range = new Point(gp.x + 1 + hallL + 1, gp.y + hallL);
-										}
-										else if(x_direction && !increment){
-											start_range = new Point(gp.x - 1, gp.y - 1);
-											end_range = new Point(gp.x - 1 - hallL - 1, gp.y + hallL);
-										}
-										else if(!x_direction && increment){
-											start_range = new Point(gp.x-1, gp.y+1);
-											end_range = new Point(gp.x + hallL, gp.y+1+hallL+1);
-										}
-										else if(!x_direction && !increment){
-											start_range = new Point(gp.x - 1, gp.y - 1);
-											end_range = new Point(gp.x + hallL, gp.y - 1 - hallL - 1);
-										}
-										
-										for(int qq = start_range.x; qq <= end_range.x; qq++){
-											for(int ww = start_range.y; ww <= end_range.y; ww++){
-												if(grid.get(qq).get(ww) != Def.UNASSIGNED_CODE)
-													open_found = false;
-											}
-										}
-									 }
-								
-								//IX: If still good, make the entrance
-									if(open_found){
-										side_obtained = true;
-										if(x_direction && increment){
-											for(int qq = 0; qq < hallL; qq++){
-												grid.get(gp.x+qq).set(gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-												entrance.add(new Point(gp.x+qq, gp.y));
-											}
-										}
-										else if(x_direction && !increment){
-											for(int qq = 0; qq < hallL; qq++){
-												grid.get(gp.x-qq).set(gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-												entrance.add(new Point(gp.x-qq, gp.y));
-											}
-										}
-										else if(!x_direction && increment){
-											for(int qq = 0; qq < hallL; qq++){
-												grid.get(gp.x).set(gp.y+qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
-												entrance.add(new Point(gp.x, gp.y+qq));
-											}
-										}
-										else if(!x_direction && !increment){
-											for(int qq = 0; qq < hallL; qq++){
-												grid.get(gp.x).set(gp.y-qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
-												entrance.add(new Point(gp.x, gp.y-qq));
-											}
-										}
-										break;
-									}
-							}
-						}
-					}
-					
-					if(!side_obtained){
-						boolean new_side_found = false;
-						for(int qq = 0; qq < all_sides.size(); qq++){
-							if(!check.get(all_sides.get(qq))){
-								new_side_found = true;
-								cur_side = all_sides.get(qq);
-								break;
-							}
-						}
-						//room doesn't work
-						if(!new_side_found){
-							output.clear();
-							output.add(new Point(-1,-1));
-							return output;
+							 }
 						}
 					}
 				}
-
-
-				output.add(entrance.get(0));
-				output.add(entrance.get(entrance.size()-1));
+				if(!side_obtained){
+					boolean new_side_found = false;
+					for(int qq = 0; qq < all_sides.size(); qq++){
+						if(!check.get(all_sides.get(qq))){
+							new_side_found = true;
+							cur_side = all_sides.get(qq);
+							break;
+						}
+					}
+					//room doesn't work
+					if(!new_side_found){
+						output.clear();
+						output.add(new Point(-1,-1));
+						return output;
+					}
+				} else{
+					output.add(entrance.get(0));
+					output.add(entrance.get(entrance.size()-1));
+				}
 			}
-			
-			return output;
 		}
+			
+		return output;
+	}
 
 	
 	private int find_closest_room(ArrayList<room> rooms, int cur_room, HashMap<Integer,Boolean> exclusions){
