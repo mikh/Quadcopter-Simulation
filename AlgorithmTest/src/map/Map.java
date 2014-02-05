@@ -321,6 +321,7 @@ public class Map {
 		
 		//add entrance point
 		Point e_s, e_e;
+		Point start_point = new Point(-1,-1), end_point = new Point(-1,-1);
 		for(int ii = 0; ii < 2; ii++){
 			e_s = new Point(Def.min(entrances.get(ii*2).x, entrances.get(ii*2+1).x), Def.min(entrances.get(ii*2).y, entrances.get(ii*2+1).y));
 			e_e = new Point(Def.max(entrances.get(ii*2).x, entrances.get(ii*2+1).x), Def.max(entrances.get(ii*2).y, entrances.get(ii*2+1).y));
@@ -328,12 +329,22 @@ public class Map {
 			for(int jj = e_s.x; jj <= e_e.x; jj++){
 				for(int kk = e_s.y; kk <= e_e.y; kk++){
 					partial_map.get(jj-start_map_size.x).set(kk-start_map_size.y, 1);
-					if(jj == (int)Math.ceil((e_s.x + e_e.x)/2) && kk == (int)Math.ceil((e_s.y+e_e.y)/2))
+					if(jj == (int)Math.ceil((e_s.x + e_e.x)/2) && kk == (int)Math.ceil((e_s.y+e_e.y)/2)){
 						partial_map.get(jj-start_map_size.x).set(kk-start_map_size.y, 2);
+						if(start_point.x == -1)
+							start_point = new Point(jj - start_map_size.x, kk - start_map_size.y);
+						else
+							end_point = new Point(jj - start_map_size.x, kk - start_map_size.y);
+					}
 				}
 			}
 		}
 		Def.print_arrayList(partial_map);
+		
+		if(end_point.x == -1){
+			System.out.println("Not too entrance points found.");
+			while(true);
+		}
 		
 		//extend barriers
 		//assume hallL is odd
@@ -385,6 +396,69 @@ public class Map {
 		}
 		Def.print_arrayList(partial_map);
 		
+		ArrayList<Point> path = BFS(start_point, end_point, partial_map);
+		if(path.size() == 0)
+			System.out.println("No path found.");
+		else{
+			Def.print_arrayList(partial_map);
+		}
+		
+	}
+	
+	private ArrayList<Point> BFS(Point start_point, Point end_point, ArrayList<ArrayList<Integer>> partial_map){
+		int pm_x = partial_map.size(), pm_y = partial_map.get(0).size();
+		ArrayList<Point> path = new ArrayList<Point>();
+		
+		ArrayList<Point> search_nodes = new ArrayList<Point>();
+		ArrayList<Point> new_search_nodes = new ArrayList<Point>();
+		HashMap<Point, Point> seen_map = new HashMap<Point, Point>();
+		
+		search_nodes.add(start_point);
+		seen_map.put(start_point,start_point);
+		boolean found = false;
+		
+		while(search_nodes.size() != 0 && found == false){
+			for(int ii = 0; ii < search_nodes.size(); ii++){
+				Point pt = search_nodes.get(ii);
+				for(int jj = -1; jj <= 1; jj++){
+					for(int kk = -1; kk <= 1; kk++){
+						if((jj == 0 || kk == 0) && !(jj == 0 && kk == 0)){
+							Point pn = new Point(pt.x + jj, pt.y + kk);
+							if((pn.x >= 0) && (pn.x < pm_x) && (pn.y >= 0) && (pn.y < pm_y)){
+								if(pn.x == end_point.x && pn.y == end_point.y){
+									seen_map.put(end_point,pt);
+									found = true;
+									search_nodes.clear();
+									jj = 2;
+									kk = 2;
+									break;
+								}								
+								if(partial_map.get(pn.x).get(pn.y) == 0 && !seen_map.containsKey(pn)){
+									new_search_nodes.add(pn);
+									seen_map.put(pn, pt);
+								}
+							}
+						}
+					}
+				}
+			}
+			if(!found){
+				search_nodes = new_search_nodes;
+				new_search_nodes = new ArrayList<Point>();
+			}
+		}
+		
+		if(found){
+			Point pt = seen_map.get(end_point);
+			path.add(end_point);
+			while(pt.x != start_point.x || pt.y != start_point.y){
+				partial_map.get(pt.x).set(pt.y,4);
+				path.add(pt);
+				pt = seen_map.get(pt);
+			}
+		}
+		
+		return path;
 	}
 
 	private ArrayList<Point> generateEntrancePoints(int seed, ArrayList<room> rooms, int rm_1, int rm_2, ArrayList<Point> sides){
