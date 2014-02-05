@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Point;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Def {
 	
@@ -125,6 +126,25 @@ public class Def {
 	public static Point getNextPoint(Point pt, int direction){if(direction == UP) return new Point(pt.x, pt.y-1); else if(direction == DOWN) return new Point(pt.x, pt.y + 1); else if(direction == RIGHT) return new Point(pt.x+1, pt.y); else if(direction == LEFT) return new Point(pt.x-1, pt.y); return new Point(-1,-1);}
 
 	public static int min(int a, int b){if(a > b) return b; return a;}
+	public static int min(int a, int b, int c){return min(min(a,b), c);}
+	public static int min(int a, int b, int c, int d){return min(min(a,b),min(c,d));}
 	
 	public static int max(int a, int b){if(a > b) return a; return b;}
+	public static int max(int a, int b, int c){return max(max(a,b),c);}
+	public static int max(int a, int b, int c, int d){return max(max(a,b),max(c,d));}
+	
+	public static String print_point(Point pt){ return "(" + pt.x + "," + pt.y + ")";}
+	
+	public static void print_arrayList(ArrayList<ArrayList<Integer>> aL){
+		System.out.println(" ");
+		for(int ii = 0; ii < aL.size(); ii++){
+			for(int jj = 0; jj < aL.get(ii).size(); jj++){
+				System.out.print(" " + aL.get(ii).get(jj));
+			}
+			System.out.println(" ");
+		}
+		System.out.println(" ");
+	}
+	
+	
 }
