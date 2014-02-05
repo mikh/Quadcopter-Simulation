@@ -248,7 +248,7 @@ public class Map {
 		/****** generate Hallways *******/
 		
 		int room1 = 0;
-		rooms.get(room1).color(10);
+		//rooms.get(room1).color(10);
 		HashMap<Integer, Boolean> exclusions = new HashMap<Integer, Boolean>();
 		int room2 = find_closest_room(rooms, room1, exclusions);
 		//rooms.get(room2).color(10);
@@ -276,7 +276,7 @@ public class Map {
 	
 	}
 	
-	private void pathing(int seed, ArrayList<room> rooms, int rm_1, int rm_2, ArrayList<Point> entrances, Point start_map_size, Point end_map_size){
+	private boolean pathing(int seed, ArrayList<room> rooms, int rm_1, int rm_2, ArrayList<Point> entrances, Point start_map_size, Point end_map_size){
 		Random rand = new Random(seed);
 		room rm1 = rooms.get(rm_1), rm2 = rooms.get(rm_2);
 		int hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE, grid_x = grid.size(), grid_y = grid.get(0).size();
@@ -297,12 +297,16 @@ public class Map {
 		//create partial map
 		int pm_x = end_map_size.x - start_map_size.x + 1, pm_y = end_map_size.y - start_map_size.y + 1;
 		ArrayList<ArrayList<Integer>> partial_map = new ArrayList<ArrayList<Integer>>();
+		ArrayList<ArrayList<Integer>> partial_map_save = new ArrayList<ArrayList<Integer>>();
 		for(int ii = 0; ii < pm_x; ii++){
 			ArrayList<Integer> row = new ArrayList<Integer>();
+			ArrayList<Integer> row2 = new ArrayList<Integer>();
 			for(int jj = 0; jj < pm_y; jj++){
 				row.add(0);
+				row2.add(0);
 			}
 			partial_map.add(row);
+			partial_map_save.add(row2);
 		}
 		//System.out.println("Creating partial map based on points " + Def.print_point(start_map_size) + " and " + Def.print_point(end_map_size) + " with dimensions " + pm_x + "x" + pm_y);
 		
@@ -317,6 +321,13 @@ public class Map {
 				//System.out.print(" " + partial_map.get(ii).get(jj));
 			}
 			//System.out.println(" ");
+		}
+		
+		//save map
+		for(int ii = 0; ii < pm_x; ii++){
+			for(int jj = 0; jj < pm_y; jj++){
+				partial_map_save.get(ii).set(jj, partial_map.get(ii).get(jj));
+			}
 		}
 		
 		//add entrance point
@@ -397,12 +408,88 @@ public class Map {
 		Def.print_arrayList(partial_map);
 		
 		ArrayList<Point> path = BFS(start_point, end_point, partial_map);
-		if(path.size() == 0)
+		if(path.size() == 0){
 			System.out.println("No path found.");
+			Point start_new = new Point(start_map_size.x-5, start_map_size.y-5);
+			if(start_new.x < 0) start_new.x = 0;
+			if(start_new.y < 0) start_new.y = 0;
+			Point end_new = new Point(end_map_size.x+5, end_map_size.y+5);
+			if(end_new.x >= grid_x) end_new.x = grid_x;
+			if(end_new.y >= grid_y) end_new.y = grid_y;
+			if(start_new.x == start_map_size.x && start_new.y == start_map_size.y && end_new.x == end_map_size.x && end_new.y == end_map_size.y)
+				return false;
+			return pathing(seed, rooms, rm_1, rm_2, entrances, start_new, end_new);
+		}			
 		else{
 			Def.print_arrayList(partial_map);
+			Def.print_arrayList(partial_map_save);
+			
+			//update mini-map
+			for(int ii = 0; ii < path.size(); ii++){
+				partial_map_save.get(path.get(ii).x).set(path.get(ii).y,2);
+			}
+			
+			Def.print_arrayList(partial_map_save);
+			for(int ii = 0; ii < pm_x; ii++){
+				for(int jj = 0; jj < pm_y; jj++){
+					if(partial_map_save.get(ii).get(jj) == 2){
+						for(int kk = 0; kk >= -1*(hallL/2); kk--){
+							for(int qq = 0; qq >= -1*(hallL/2); qq--){
+								if((kk == 0 || qq == 0) && !(kk == 0 && qq == 0)){
+									int xx = ii+kk;
+									int yy = jj+qq;
+									if(xx >= 0 && xx < pm_x && yy >= 0 && yy < pm_y){
+										if(partial_map_save.get(xx).get(yy) != 0){
+											if(kk < 0) kk = -1*hallL;
+											if(qq < 0) qq = -1*hallL;
+										}
+										else
+											partial_map_save.get(xx).set(yy, 3);
+									}
+								}
+							}
+						}
+						for(int kk =0; kk <= (hallL/2); kk++){
+							for(int qq = 0; qq <= (hallL/2); qq++){
+								if((kk == 0 || qq == 0) && !(kk == 0 && qq == 0)){
+									int xx = ii+kk;
+									int yy = jj+qq;
+									if(xx >= 0 && xx < pm_x && yy >= 0 && yy < pm_y){
+										if(partial_map_save.get(xx).get(yy) != 0){
+											if(kk > 0) kk = hallL;
+											if(qq > 0) qq = hallL;
+										}
+										else
+											partial_map_save.get(xx).set(yy, 3);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			for(int ii = 0; ii < pm_x; ii++){
+				for(int jj = 0; jj < pm_y; jj++){
+					if(partial_map_save.get(ii).get(jj) == 3)
+						partial_map_save.get(ii).set(jj, 2);
+				}
+			}
+			Def.print_arrayList(partial_map_save);
+			
+			//update main map
+			for(int ii = 0; ii < pm_x; ii++){
+				for(int jj = 0; jj < pm_y; jj++){
+					if(partial_map_save.get(ii).get(jj) == 2){
+						int xx = start_map_size.x + ii, yy= start_map_size.y + jj;
+						if(grid.get(xx).get(yy) == Def.UNASSIGNED_CODE)
+							update(xx, yy, Def.MOVABLE_AREA_CODE);
+					}						
+				}
+			}
+			
 		}
-		
+		return true;
 	}
 	
 	private ArrayList<Point> BFS(Point start_point, Point end_point, ArrayList<ArrayList<Integer>> partial_map){
