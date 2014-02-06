@@ -11,6 +11,8 @@ import java.util.ArrayList;
 
 public class Def {
 	
+	public static final int SEED = 1;
+	
 	/* code description:
 	 *  0 - unassigned
 	 *  1 - Wall
@@ -66,11 +68,13 @@ public class Def {
 	public static final int HALLWAY_LENGTH_FT = 6;	//if this isn't a multiple of ft/square then crash
 	public static final int NUMBER_OF_ROOMS = 8;
 	public static final int NUMBER_OF_SURVIVORS = 10;
-	public static final int MINIMUM_SIZE_OF_ROOM_FT = 10;		//has to match with ft/square
+	public static final int MINIMUM_SIZE_OF_ROOM_FT = 30;		//has to match with ft/square
 	public static final int MAXIMUM_SIZE_OF_ROOM_FT = 50;		//has to match with ft/sq
 	public static final int MAXIMUM_NUMBER_OF_DOORS_PER_ROOM = 2;
 	public static final int DOOR_SIZE_FT = 4;
 	public static final int HALLWAY_INCREMENTS = 1000;
+	public static final int ROOM_CONNECTIONS_MIN = 2;
+	public static final int ROOM_CONNECTIONS_MAX = 4;
 	
 	public static final double PROBABILITY_OF_ROOM = 0.1;
 	public static final double PROBABILITY_OF_FORK = 0.05;

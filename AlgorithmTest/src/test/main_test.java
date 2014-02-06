@@ -43,7 +43,7 @@ public class main_test {
 			Map new_map = new Map(bw);
 			GUI gg = new GUI(bw, new_map);
 			new_map.attachGUI(gg);
-			new_map.generate(0);
+			new_map.generate(Def.SEED);
 			//new_map.load_map(Def.SAMPLE_MAP_1);
 			new_map.printMap();  //prints map to map.txt
 			Def.output(bw, String.format("Finished creating map at %dms. Time elapsed: %dms\r\n", System.currentTimeMillis() - time_start, System.currentTimeMillis() - time_elapsed));
