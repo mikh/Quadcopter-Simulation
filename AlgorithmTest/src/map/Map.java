@@ -1195,14 +1195,16 @@ class room{
 	public Point end;
 	public boolean accessed;
 	public ArrayList<Integer> connected_to;
-	public ArrayList<Integer> exclusions = new ArrayList<Integer>();
-	public ArrayList<ArrayList<Point>> faces = new ArrayList<ArrayList<Point>>();
+	public ArrayList<Integer> room_exclusions = new ArrayList<Integer>();
+	public ArrayList<DoublePoint> faces = new ArrayList<DoublePoint>();
+	public ArrayList<ArrayList<DoublePoint>> face_exclusions = new ArrayList<ArrayList<DoublePoint>>();
+	public ArrayList<ArrayList<ArrayList<DoublePoint>>> entrance_exclusions = new ArrayList<ArrayList<ArrayList<DoublePoint>>>();
 	
 	public Map mm;
 	public int connections;
-	public ArrayList<ArrayList<Point>> entrance_points;
+	public ArrayList<DoublePoint> entrance_points = new ArrayList<DoublePoint>();
 	
-	public room(int ID, int doors, Point start, Point end, Map mm){
+	public room(int ID, int doors, Point start, Point end, Map mm, int rooms){
 		this.ID = ID;
 		this.doors = doors;
 		this.start = start;
@@ -1211,7 +1213,15 @@ class room{
 		this.connected_to = new ArrayList<Integer>();
 		this.mm = mm;
 		this.connections = 0;
-		entrance_points = new ArrayList<ArrayList<Point>>();
+		for(int ii = 0; ii < rooms; ii++){
+			face_exclusions.add(new ArrayList<DoublePoint>());
+			ArrayList<ArrayList<DoublePoint>> fff = new ArrayList<ArrayList<DoublePoint>>();
+			for(int jj = 0; jj < 4; jj++){
+				ArrayList<DoublePoint> qqq = new ArrayList<DoublePoint>();
+				fff.add(qqq);
+			}
+			entrance_exclusions.add(fff);
+		}
 	}
 
 	public void generateFaces(){
@@ -1221,10 +1231,90 @@ class room{
 		x2y1 = new Point(end.x, start.y);
 		x2y2 = end;
 		faces.clear();
-		faces.add(new ArrayList<Point>(Arrays.asList(x1y1, x1y2)));
-		faces.add(new ArrayList<Point>(Arrays.asList(x1y2, x2y2)));
-		faces.add(new ArrayList<Point>(Arrays.asList(x2y1, x2y2)));
-		faces.add(new ArrayList<Point>(Arrays.asList(x1y1, x2y1)));
+		faces.add(new DoublePoint(x1y1, x1y2));
+		faces.add(new DoublePoint(x1y2, x2y2));
+		faces.add(new DoublePoint(x2y2, x2y1));
+		faces.add(new DoublePoint(x2y1, x1y1));
+	}
+	
+	public boolean isRoomExcluded(int room){
+		if(room >= 0 && room < room_exclusions.size() && room != ID){
+			for(int ii = 0; ii < room_exclusions.size(); ii++){
+				if(room_exclusions.get(ii) == room)
+					return true;
+			}
+			return false;
+		}
+		return true;
+	}
+	
+	public boolean isFaceExcluded(int room, DoublePoint face){
+		if(room >= 0 && room < face_exclusions.size() && room != ID){
+			ArrayList<DoublePoint> fff = face_exclusions.get(room);
+			for(int ii = 0; ii < fff.size(); ii++){
+				if(fff.get(ii).equals(face))
+					return true;
+			}
+			return false;
+		}
+		return true;
+	}
+	
+	public boolean isEntranceExcluded(int room, DoublePoint face, DoublePoint entrance){
+		if(room >= 0 && room < entrance_exclusions.size() && room != ID){
+			ArrayList<ArrayList<DoublePoint>> fff = entrance_exclusions.get(room);
+			for(int ii = 0; ii < faces.size(); ii++){
+				if(faces.get(ii).equals(face)){
+					ArrayList<DoublePoint> qqq = fff.get(ii);
+					for(int jj = 0; jj < qqq.size(); jj++){
+						if(qqq.get(jj).equals(entrance))
+							return true;
+					}
+					return false;
+				}
+			}
+			return true;
+		}
+		return true;
+	}
+	
+	public ArrayList<DoublePoint> getFaceExclusions(int room){
+		if(room >= 0 && room < face_exclusions.size())
+			return face_exclusions.get(room);
+		return null;
+	}
+	
+	public ArrayList<DoublePoint> getEntranceExclusions(int room, DoublePoint face){
+		if(room >= 0 && room < face_exclusions.size()){
+			ArrayList<ArrayList<DoublePoint>> fff = entrance_exclusions.get(room);
+			for(int ii = 0; ii < faces.size(); ii++){
+				if(faces.get(ii).equals(face)){
+					return fff.get(ii);
+				}
+			}
+		}
+		return null;
+	}
+	
+	public void excludeRoom(int room){
+		room_exclusions.add(room);
+	}
+	
+	public void excludeFace(int room, DoublePoint face){
+		if(room >= 0 && room < face_exclusions.size()){
+			face_exclusions.get(room).add(face);
+		}
+	}
+	
+	public void excludeEntrance(int room, DoublePoint face, DoublePoint entrance){
+		if(room >= 0 && room < entrance_exclusions.size()){
+			for(int ii = 0; ii < faces.size(); ii++){
+				if(faces.get(ii).equals(face)){
+					entrance_exclusions.get(room).get(ii).add(entrance);
+					return;
+				}
+			}
+		}
 	}
 	
 	public void color(int color_code){
@@ -1234,5 +1324,34 @@ class room{
 				mm.update(ii, jj, color_code);
 			}
 		}
+	}
+}
+
+class DoublePoint{
+	public Point p1, p2;
+	
+	public DoublePoint(Point p1, Point p2){
+		if(p1.x < p2.x){
+			this.p1 = p1;
+			this.p2 = p2;
+		} else if(p1.x > p2.x){
+			this.p1 = p2;
+			this.p2 = p1;
+		} else if(p1.x == p2.x){
+			if(p1.y < p2.y){
+				this.p1 = p1;
+				this.p2 = p2;
+			}
+			else{
+				this.p1 = p2;
+				this.p2 = p1;
+			}
+		}
+	}
+	
+	public boolean equals(DoublePoint p){
+		if(p1.x == p.p1.x && p1.y == p.p1.y && p2.x == p.p2.x && p2.y == p.p2.y)
+			return true;
+		return false;
 	}
 }
