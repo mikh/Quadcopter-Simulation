@@ -260,23 +260,20 @@ public class Map {
 				if(rooms.get(zz).connected_to.size() < rooms.get(zz).connections){
 					fully_connected = false;
 					int room1 = zz;
-					HashMap<Integer, Boolean> exclusions = new HashMap<Integer, Boolean>();
-					for(int qq = 0; qq < rooms.size(); qq++){
-						if(rooms.get(qq).connected_to.size() == rooms.get(qq).connections)
-							exclusions.put(qq, true);
-					}
+					HashMap<ArrayList<Point>, Boolean> face_exclusions = new HashMap<ArrayList<Point>, Boolean>();
 					boolean unconnected = true;
 					while(unconnected){
-						int room2 = find_closest_room(rooms, room1, exclusions);
+						int room2 = find_closest_room(rooms, room1);
 						if(room2 == -1){
 							System.out.println("Cannot connect room " + room1);
 							rooms.get(room1).connected_to.add(-1);
 							break;
 						}
+						
 						System.out.println("Closest room to room " + room1 + " defined between (" + rooms.get(room1).start.x + "," + rooms.get(room1).start.y + ") and (" + rooms.get(room1).end.x + "," + rooms.get(room1).end.y + ") is room " + room2 + " defined between (" + rooms.get(room2).start.x + "," + rooms.get(room2).start.y + ") and (" + rooms.get(room2).end.x + "," + rooms.get(room2).end.y);
 						ArrayList<Point> faces = find_opposing_faces(rooms, room1, room2);
 						System.out.println("The opposing faces of the rooms are between (" + faces.get(0).x + "," + faces.get(0).y + "), (" + faces.get(1).x + "," + faces.get(1).y + ") for room " + room1 + " and (" + faces.get(2).x + "," + faces.get(2).y + "), (" + faces.get(3).x + "," + faces.get(3).y + ") for room " + room2);
-						ArrayList<Point> qq = generateEntrancePoints(seed, rooms, room1, room2, faces);
+						ArrayList<Point> qq = generateEntrancePoints(seed, rooms, room1, room2, faces, face_exclusions);
 						if(qq.size() == 1){
 							if(qq.get(0).x == 0){
 								System.out.println("Cannot connect room " + room1);
@@ -582,7 +579,7 @@ public class Map {
 		return path;
 	}
 
-	private ArrayList<Point> generateEntrancePoints(int seed, ArrayList<room> rooms, int rm_1, int rm_2, ArrayList<Point> sides, ArrayList<HashMap<ArrayList<Point>,Boolean>> exclusions){
+	private ArrayList<Point> generateEntrancePoints(int seed, ArrayList<room> rooms, int rm_1, int rm_2, ArrayList<Point> sides, HashMap<ArrayList<Point>,Boolean> exclusions){
 		
 		//Setup
 		Random rand = new Random(seed);
@@ -745,6 +742,33 @@ public class Map {
 								}
 							}
 						 }
+					/*	
+						//Check exclusions
+						Point ex_c_start_point = new Point(-1,-1);
+						Point ex_c_end_point = new Point(-1,-1);
+						if(x_direction && increment){
+							ex_c_start_point = new Point(gp.x, gp.y - (hallL-1));
+							ex_c_end_point = new Point(gp.x, gp.y);
+						} else if(x_direction && !increment){
+							ex_c_start_point = new Point(gp.x, gp.y);
+							ex_c_end_point = new Point(gp.x, gp.y + (hallL-1));
+						} else if(!x_direction && increment){
+							ex_c_start_point = new Point(gp.x - (hallL-1), gp.y);
+							ex_c_end_point = new Point(gp.x, gp.y);
+						} else if(!x_direction && !increment){
+							ex_c_start_point = new Point(gp.x, gp.y);
+							ex_c_end_point = new Point(gp.x + (hallL - 1), gp.y);
+						}
+						
+						ArrayList<Point> entrance_check = new ArrayList<Point>();
+						entrance_check.add(ex_c_start_point);
+						entrance_check.add(ex_c_end_point);
+						if(exclusions.contains(entrance_check))
+							open_found = false;
+						else
+							my_rooms.get(zz).entrance_points.add(entrance_check);
+						*/
+						
 						//IX: If still good, make the entrance
 						if(open_found){
 							side_obtained = true;
@@ -937,7 +961,7 @@ public class Map {
 	}
 
 	
-	private int find_closest_room(ArrayList<room> rooms, int cur_room, HashMap<Integer,Boolean> exclusions){
+	private int find_closest_room(ArrayList<room> rooms, int cur_room){
 		Point x1y1 = rooms.get(cur_room).start, x1y2 = new Point(rooms.get(cur_room).start.x, rooms.get(cur_room).end.y), x2y1 = new Point(rooms.get(cur_room).end.x, rooms.get(cur_room).start.y), x2y2 = rooms.get(cur_room).end; 
 		ArrayList<Point> cur_points = new ArrayList<Point>();
 		cur_points.add(x1y1);
@@ -947,8 +971,9 @@ public class Map {
 		int closest_room = -1;
 		double distance = -1;
 		boolean found = false;
+		ArrayList<Integer> exclusions = rooms.get(cur_room).exclusions;
 		for(int ii = 0; ii < rooms.size(); ii++){
-			if(ii != cur_room && exclusions.containsKey(ii) == false){
+			if(ii != cur_room && exclusions.contains(ii) == false){
 				found = true;
 				room rm = rooms.get(ii);
 				Point n_x1y1 = rm.start, n_x2y2 = rm.end;
@@ -1170,6 +1195,9 @@ class room{
 	public Point end;
 	public boolean accessed;
 	public ArrayList<Integer> connected_to;
+	public ArrayList<Integer> exclusions = new ArrayList<Integer>();
+	public ArrayList<ArrayList<Point>> faces = new ArrayList<ArrayList<Point>>();
+	
 	public Map mm;
 	public int connections;
 	public ArrayList<ArrayList<Point>> entrance_points;
@@ -1184,6 +1212,19 @@ class room{
 		this.mm = mm;
 		this.connections = 0;
 		entrance_points = new ArrayList<ArrayList<Point>>();
+	}
+
+	public void generateFaces(){
+		Point x1y1, x1y2, x2y1, x2y2;
+		x1y1 = start;
+		x1y2 = new Point(start.x, end.y);
+		x2y1 = new Point(end.x, start.y);
+		x2y2 = end;
+		faces.clear();
+		faces.add(new ArrayList<Point>(Arrays.asList(x1y1, x1y2)));
+		faces.add(new ArrayList<Point>(Arrays.asList(x1y2, x2y2)));
+		faces.add(new ArrayList<Point>(Arrays.asList(x2y1, x2y2)));
+		faces.add(new ArrayList<Point>(Arrays.asList(x1y1, x2y1)));
 	}
 	
 	public void color(int color_code){
