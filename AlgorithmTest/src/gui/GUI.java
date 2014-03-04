@@ -22,12 +22,13 @@ import javax.swing.JPanel;
 
 public class GUI {
 	
-	private JFrame frame;
+	private JFrame frame_map, frame_dynamic, frame_sensor, frame_stats;
 	private BufferedWriter log;
 	private full_grid grid;
 	private internal_grid i_grid;
 	
 	
+	@SuppressWarnings("unused")
 	public GUI(BufferedWriter log_file, Map mmap) throws IOException{
 		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");	//prevent a exception due to a JDK bug
 		
@@ -59,11 +60,23 @@ public class GUI {
 
 		
 		log.write("Creating Frame.\r\n");
-		frame = new JFrame("Algorithm Testing");
+		frame_map = new JFrame("Actual Map");
 
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(Def.FRAME_SIZE_X, Def.FRAME_SIZE_Y);
-		frame.setLayout(new GridBagLayout());
+		frame_map.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame_map.setSize(Def.FRAME_SIZE_X, Def.FRAME_SIZE_Y);
+		frame_map.setLayout(new GridBagLayout());
+		
+		frame_dynamic = new JFrame("Dynamic Map");
+		frame_dynamic.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame_dynamic.setSize(Def.FRAME_DYNAMIC_SIZE_X, Def.FRAME_DYNAMIC_SIZE_Y);
+		
+		frame_sensor = new JFrame("Sensor Map");
+		frame_sensor.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame_sensor.setSize(Def.FRAME_SENSOR_SIZE_X, Def.FRAME_SENSOR_SIZE_Y);
+		
+		frame_stats = new JFrame("Statistics");
+		frame_stats.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame_stats.setSize(Def.FRAME_STATS_SIZE_X, Def.FRAME_STATS_SIZE_Y);
 		
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -71,10 +84,13 @@ public class GUI {
 		c.gridy = 0;
 		c.gridheight = 5;
 		grid = new full_grid(log, mmap);
-		frame.add(grid, c);
+		frame_map.add(grid, c);
 		
 
-		frame.setVisible(true);
+		frame_map.setVisible(true);
+		frame_dynamic.setVisible(true);
+		frame_sensor.setVisible(true);
+		frame_stats.setVisible(true);
 	}
 
 	public void addInternalMap(ArrayList<ArrayList<Integer>> internal_map){
@@ -85,14 +101,12 @@ public class GUI {
 		c.gridy = 0;
 		c.gridheight = 3;
 		i_grid = new internal_grid(log, internal_map);
-		frame.add(i_grid, c);
-		frame.getContentPane().revalidate();
+		frame_map.add(i_grid, c);
+		frame_map.getContentPane().revalidate();
 	}
 	
 	public void update_square(int xx, int yy){grid.update_square(xx, yy);}
 	public void update_i_square(int xx, int yy){i_grid.update_square(xx, yy);}
-
-	
 }
 
 

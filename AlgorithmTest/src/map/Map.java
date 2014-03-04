@@ -28,11 +28,6 @@ import gui.GUI;
  *   7 - currently sensing
  *   8 - currently searching
  *   9 - path (sensed and searched)
- * 
- * 
- * TODO: comments and control code
- * TODO: Streamline
- * TODO: Finish Generation code
  */
 public class Map {
 	
@@ -48,6 +43,7 @@ public class Map {
 	 * @param log_file 
 	 * @throws IOException: If there is an issue with logging file
 	 */
+	@SuppressWarnings("unused")
 	public Map(BufferedWriter log_file) throws IOException{
 		grid = new ArrayList<ArrayList<Integer>>();
 		log = log_file;
@@ -69,10 +65,14 @@ public class Map {
 		Def.output(log, String.format("Found square size in pixels. x = %dpx y = %dpx\r\n", sq_row, sq_col));
 		
 		//initialize grid to 0
+		resize(sq_row, sq_col, 0);
+	}
+	
+	public void resize(int sq_row, int sq_col, int val){
 		for(int ii = 0; ii < sq_row; ii++){
 			grid.add(new ArrayList<Integer>());
 			for(int jj = 0; jj < sq_col; jj++){
-				grid.get(ii).add(0);
+				grid.get(ii).add(val);
 			}
 		}
 	}
@@ -82,23 +82,25 @@ public class Map {
 	 * @param map - can be Def.SAMPLE_MAP_1
 	 * @throws IOException - if the file cannot be opened
 	 */
-	public void load_map(int map) throws IOException{
-		if(map == Def.SAMPLE_MAP_1){
-			Def.output(log, "Loading map sample map 1...\r\n");
+	public void load_map(String map) throws IOException{
+		if(map.equals(Def.SAMPLE_MAP_1) || map.equals(Def.SAMPLE_MAP_2)){
+			Def.output(log, "Loading map sample map...\r\n");
 			
-			BufferedReader br = new BufferedReader(new FileReader("sample_map_1.txt"));
+			BufferedReader br = new BufferedReader(new FileReader(map));
 			String line = br.readLine();
-			int index = 0;
+			ArrayList<String> lines = new ArrayList<String>();
 			while(line != null){
-				for(int ii = 0; ii < 40; ii++){
-					grid.get(index).set(ii, line.charAt(ii) - '0');
-				}
-				index++;
-				if(index == 40)
-					break;
+				lines.add(line);
 				line = br.readLine();
 			}
 			br.close();
+			
+			resize(lines.size(), lines.get(0).length(), 0);
+			for(int ii = 0; ii < lines.size(); ii++){
+				for(int jj = 0; jj < lines.get(ii).length(); jj++){
+					update(ii, jj, (int)(lines.get(ii).charAt(jj) - '0'));
+				}
+			}
 		}
 		else{
 			Def.output(log, "Map not found.");
@@ -185,7 +187,8 @@ public class Map {
 					grid.get(ii).set(0 , Def.MOVABLE_AREA_CODE);
 				break;		
 		}
-		room start_position_room = new room(0, 1, start_pos_start, start_pos_end, this);
+		room start_position_room = new room(0, 1, start_pos_start, start_pos_end, this, Def.NUMBER_OF_ROOMS);
+		start_position_room.generateFaces();
 		
 		/******generate rooms*****/	
 		ArrayList<room> rooms = new ArrayList<room>();
@@ -237,7 +240,8 @@ public class Map {
 					grid.get(jj).set(kk, Def.MOVABLE_AREA_CODE);
 				}
 			}
-			room new_room = new room(ii+1, 0, start, end, this);
+			room new_room = new room(ii+1, 0, start, end, this, Def.NUMBER_OF_ROOMS);
+			new_room.generateFaces();
 			rooms.add(new_room);
 			
 			Def.output(log, String.format("Creating room between (%d,%d) and (%d,%d)\r\n", start.x, start.y, end.x, end.y));
@@ -257,40 +261,69 @@ public class Map {
 		while(!fully_connected){
 			fully_connected = true;
 			for(int zz = 0; zz < rooms.size(); zz++){
-				if(rooms.get(zz).connected_to.size() < rooms.get(zz).connections){
+				room rm = rooms.get(zz);
+				if(rm.connected_to.size() < rm.connections){
 					fully_connected = false;
-					int room1 = zz;
-					HashMap<ArrayList<Point>, Boolean> face_exclusions = new HashMap<ArrayList<Point>, Boolean>();
 					boolean unconnected = true;
 					while(unconnected){
-						int room2 = find_closest_room(rooms, room1);
-						if(room2 == -1){
-							System.out.println("Cannot connect room " + room1);
-							rooms.get(room1).connected_to.add(-1);
-							break;
-						}
-						
-						System.out.println("Closest room to room " + room1 + " defined between (" + rooms.get(room1).start.x + "," + rooms.get(room1).start.y + ") and (" + rooms.get(room1).end.x + "," + rooms.get(room1).end.y + ") is room " + room2 + " defined between (" + rooms.get(room2).start.x + "," + rooms.get(room2).start.y + ") and (" + rooms.get(room2).end.x + "," + rooms.get(room2).end.y);
-						ArrayList<Point> faces = find_opposing_faces(rooms, room1, room2);
-						System.out.println("The opposing faces of the rooms are between (" + faces.get(0).x + "," + faces.get(0).y + "), (" + faces.get(1).x + "," + faces.get(1).y + ") for room " + room1 + " and (" + faces.get(2).x + "," + faces.get(2).y + "), (" + faces.get(3).x + "," + faces.get(3).y + ") for room " + room2);
-						ArrayList<Point> qq = generateEntrancePoints(seed, rooms, room1, room2, faces, face_exclusions);
-						if(qq.size() == 1){
-							if(qq.get(0).x == 0){
-								System.out.println("Cannot connect room " + room1);
-								rooms.get(room1).connected_to.add(-1);
-								break;
-							} else{
-								exclusions.put(room2, true);
-							}
+						int rm2 = find_closest_room(rooms, zz);
+						if(rm2 == -1){
+							System.out.println("Cannot connect room " + zz);
+							rm.connected_to.add(-1);
+							unconnected = false;
 						} else{
-						//	color(qq.get(0), qq.get(1), Def.CURRENTLY_SEARCHING_AREA_CODE);
-						//	color(qq.get(2), qq.get(3), Def.CURRENTLY_SEARCHING_AREA_CODE);
-							if(!pathing(seed, rooms, room1, room2, qq, new Point(-1,-1), new Point(-1,-1))){
-								exclusions.put(room2, true);
-							} else{
-								rooms.get(room1).connected_to.add(room2);
-								rooms.get(room2).connected_to.add(room1);
-								unconnected = false;
+							boolean face_chosen = false;
+							while(!face_chosen){
+								ArrayList<DoublePoint> faces = find_closest_face(rooms, zz, rm2);
+								if(faces == null){
+									rm.excludeRoom(rm2);
+									face_chosen = true;
+								}else{
+									face_chosen = GenerateEntrancePointsAndPath(rand, rooms, zz, rm2, faces);
+									if(!face_chosen){
+										rm.excludeOpposingFace(rm2, faces.get(0), faces.get(1));
+									} else{
+										unconnected = false;
+										rm.connected_to.add(rm2);
+										rooms.get(rm2).connected_to.add(zz);
+										rm.excludeRoom(rm2);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		//add borders to rooms
+		for(int ii = 0; ii < rooms.size(); ii++){
+			rooms.get(ii).addBorder();
+		}
+		
+		//fill in blanks
+		for(int ii = 0; ii < grid_x; ii++){
+			for(int jj = 0; jj < grid_y; jj++){
+				if(grid.get(ii).get(jj) == 0)
+					update(ii, jj, Def.WALL_CODE);
+			}
+		}
+		
+		//add survivors
+		int survivors = 0;
+		while(survivors < Def.NUMBER_OF_SURVIVORS){
+			if(survivors == Def.NUMBER_OF_SURVIVORS)
+				break;
+			for(int ii = 0; ii < grid_x; ii++){
+				if(survivors == Def.NUMBER_OF_SURVIVORS)
+					break;
+				for(int jj = 0; jj < grid_y; jj++){
+					if(survivors == Def.NUMBER_OF_SURVIVORS)
+						break;
+					else{
+						if(grid.get(ii).get(jj) == Def.MOVABLE_AREA_CODE){
+							if(rand.nextInt(1000) == 1){
+								update(ii, jj, Def.PERSON_CODE);
+								survivors++;
 							}
 						}
 					}
@@ -299,7 +332,43 @@ public class Map {
 		}
 	}
 	
-	private boolean pathing(int seed, ArrayList<room> rooms, int rm_1, int rm_2, ArrayList<Point> entrances, Point start_map_size, Point end_map_size){
+	private ArrayList<DoublePoint> find_closest_face(ArrayList<room> rooms, int rm_1, int rm_2){
+		//generate list of distances
+		ArrayList<DoublePoint> rm1_sides = rooms.get(rm_1).faces;
+		ArrayList<DoublePoint> rm2_sides = rooms.get(rm_2).faces;
+		
+		ArrayList<ArrayList<DoublePoint>> available_sides = new ArrayList<ArrayList<DoublePoint>>();
+		for(int ii = 0; ii < rm1_sides.size(); ii++){
+			if(!rooms.get(rm_1).isFaceExcluded(rm_2, rm1_sides.get(ii))){
+				for(int jj = 0; jj < rm2_sides.size(); jj++){
+					if(!rooms.get(rm_1).isOpposingFaceExcluded(rm_2, rm1_sides.get(ii), rm2_sides.get(jj))){
+						ArrayList<DoublePoint> pair = new ArrayList<DoublePoint>();
+						pair.add(rm1_sides.get(ii));
+						pair.add(rm2_sides.get(jj));
+						available_sides.add(pair);
+					}
+				}
+			}
+		}
+		
+		if(available_sides.size() == 0)
+			return null;
+		else{
+			int index = -1;
+			double min = -1;
+			for(int ii = 0; ii < available_sides.size(); ii++){
+				double distance = available_sides.get(ii).get(0).getDistance(available_sides.get(ii).get(1));
+				if(min == -1 || distance < min){
+					min = distance;
+					index = ii;
+				}
+			}
+			
+			return available_sides.get(index);
+		}
+	}
+	
+	private boolean pathing(Random rand, ArrayList<room> rooms, int rm_1, int rm_2, ArrayList<Point> entrances, Point start_map_size, Point end_map_size){
 		room rm1 = rooms.get(rm_1), rm2 = rooms.get(rm_2);
 		int hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE, grid_x = grid.size(), grid_y = grid.get(0).size();
 		
@@ -363,7 +432,7 @@ public class Map {
 		for(int ii = 0; ii < 2; ii++){
 			e_s = new Point(Def.min(entrances.get(ii*2).x, entrances.get(ii*2+1).x), Def.min(entrances.get(ii*2).y, entrances.get(ii*2+1).y));
 			e_e = new Point(Def.max(entrances.get(ii*2).x, entrances.get(ii*2+1).x), Def.max(entrances.get(ii*2).y, entrances.get(ii*2+1).y));
-			System.out.println(Def.print_point(e_s) + " " + Def.print_point(e_e));
+			//System.out.println(Def.print_point(e_s) + " " + Def.print_point(e_e));
 			for(int jj = e_s.x; jj <= e_e.x; jj++){
 				for(int kk = e_s.y; kk <= e_e.y; kk++){
 					try{
@@ -381,7 +450,7 @@ public class Map {
 				}
 			}
 		}
-		Def.print_arrayList(partial_map);
+		//Def.print_arrayList(partial_map);
 		
 		if(end_point.x == -1){
 			System.out.println("Not too entrance points found.");
@@ -436,7 +505,7 @@ public class Map {
 					partial_map.get(ii).set(jj, 1);
 			}
 		}
-		Def.print_arrayList(partial_map);
+		//Def.print_arrayList(partial_map);
 		
 		ArrayList<Point> path = BFS(start_point, end_point, partial_map);
 		if(path.size() == 0){
@@ -449,18 +518,18 @@ public class Map {
 			if(end_new.y >= grid_y) end_new.y = grid_y-1;
 			if(start_new.x == start_map_size.x && start_new.y == start_map_size.y && end_new.x == end_map_size.x && end_new.y == end_map_size.y)
 				return false;
-			return pathing(seed, rooms, rm_1, rm_2, entrances, start_new, end_new);
+			return pathing(rand, rooms, rm_1, rm_2, entrances, start_new, end_new);
 		}			
 		else{
-			Def.print_arrayList(partial_map);
-			Def.print_arrayList(partial_map_save);
+			//Def.print_arrayList(partial_map);
+			//Def.print_arrayList(partial_map_save);
 			
 			//update mini-map
 			for(int ii = 0; ii < path.size(); ii++){
 				partial_map_save.get(path.get(ii).x).set(path.get(ii).y,2);
 			}
 			
-			Def.print_arrayList(partial_map_save);
+			//Def.print_arrayList(partial_map_save);
 			for(int ii = 0; ii < pm_x; ii++){
 				for(int jj = 0; jj < pm_y; jj++){
 					if(partial_map_save.get(ii).get(jj) == 2){
@@ -506,7 +575,7 @@ public class Map {
 						partial_map_save.get(ii).set(jj, 2);
 				}
 			}
-			Def.print_arrayList(partial_map_save);
+			//Def.print_arrayList(partial_map_save);
 			
 			//update main map
 			for(int ii = 0; ii < pm_x; ii++){
@@ -579,388 +648,313 @@ public class Map {
 		return path;
 	}
 
-	private ArrayList<Point> generateEntrancePoints(int seed, ArrayList<room> rooms, int rm_1, int rm_2, ArrayList<Point> sides, HashMap<ArrayList<Point>,Boolean> exclusions){
+	private boolean GenerateEntrancePointsAndPath(Random rand, ArrayList<room> rooms, int rm_1, int rm_2, ArrayList<DoublePoint> faces){
 		
 		//Setup
-		Random rand = new Random(seed);
-		room rm1 = rooms.get(rm_1), rm2 = rooms.get(rm_2);
-		int hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE, grid_x = grid.size(), grid_y = grid.get(0).size();
 		
-		ArrayList<ArrayList<Point>> all_sides = new ArrayList<ArrayList<Point>>();
-		HashMap<ArrayList<Point>, Boolean> check = new HashMap<ArrayList<Point>, Boolean>();
-		ArrayList<Point> rm_points = new ArrayList<Point>();
-		ArrayList<Point> entrance = new ArrayList<Point>();
-		ArrayList<room> my_rooms = new ArrayList<room>();
-		my_rooms.add(rm1);
-		my_rooms.add(rm2);
-
-		ArrayList<Point> output = new ArrayList<Point>();
-		boolean open_found = false;
 		
+		int hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE;
+		ArrayList<DoublePoint> rm1_exclusions = new ArrayList<DoublePoint>();
+		ArrayList<DoublePoint> rm1_entrance_reference = new ArrayList<DoublePoint>();
+		ArrayList<ArrayList<DoublePoint>> rm2_exclusions = new ArrayList<ArrayList<DoublePoint>>();
+		ArrayList<DoublePoint> entrances = new ArrayList<DoublePoint>();
+		
+		int zz = 0;
+		boolean pass = false;
 		
 		//for each room
-		for(int zz = 0; zz < my_rooms.size(); zz++){
+		while(!pass){
 			//I: find all possible sides
-			room rm = my_rooms.get(zz);
-			ArrayList<Point> first_side = new ArrayList<Point>();
-			first_side.add(sides.get(zz*2));
-			first_side.add(sides.get(zz*2 + 1));
+	
+			DoublePoint side = faces.get(zz);				
+				
+			//III: Find maximum and minimum start locations
+			boolean x_const = false;
+			DoublePoint entrance = null;
 			
-			check.clear();
-			all_sides.clear();
-			rm_points.clear();
-			entrance.clear();
+			if(side.p1.x == side.p2.x) x_const = true;
+			int var_parameter_min = 0, var_parameter_max = 0, var_parameter_set = 0;
 			
-			rm_points.add(rm.start);
-			rm_points.add(new Point(rm.start.x,rm.end.y));
-			rm_points.add(rm.end);
-			rm_points.add(new Point(rm.end.x,rm.start.y));
-			
-			int jj = 1;
-			for(int ii = 0; ii < rm_points.size(); ii++, jj++){
-				if(jj == rm_points.size()) jj = 0;
-				ArrayList<Point> side = new ArrayList<Point>();
-				side.add(new Point(rm_points.get(ii)));
-				side.add(new Point(rm_points.get(jj)));
-				check.put(side, false);
-				all_sides.add(side);
+			if(x_const){
+				var_parameter_max = Math.abs(side.p1.y-side.p2.y) - hallL - 1;	//has to be inset
+				var_parameter_min = ((side.p1.y < side.p2.y) ? side.p1.y+1 : side.p2.y+1); 
+			} else{
+				var_parameter_max = Math.abs(side.p1.x-side.p2.x) - hallL - 1;
+				var_parameter_min = ((side.p1.x < side.p2.x) ? side.p1.x+1 : side.p2.x+1); 
 			}
-			
-			//II: Choose a side
-			ArrayList<Point> cur_side = first_side;
-			
-			boolean side_obtained = false;
-			
-			
-			while(!side_obtained){
-				check.put(cur_side, true);
-				//III: Find maximum and minimum start locations
-				boolean x_const = false;
-				boolean side_fail = false;
-				if(cur_side.get(0).x == cur_side.get(1).x) x_const = true;
-				int var_parameter_min = 0, var_parameter_max = 0, var_parameter_set = 0;
 				
-				if(x_const){
-					var_parameter_max = Math.abs(cur_side.get(0).y-cur_side.get(1).y) - hallL - 1;	//has to be inset
-					var_parameter_min = ((cur_side.get(0).y < cur_side.get(1).y) ? cur_side.get(0).y+1 : cur_side.get(1).y+1); 
-				} else{
-					var_parameter_max = Math.abs(cur_side.get(0).x-cur_side.get(1).x) - hallL - 1;
-					var_parameter_min = ((cur_side.get(0).x < cur_side.get(1).x) ? cur_side.get(0).x+1 : cur_side.get(1).x+1); 
+			//if start location is not big enough, fail side
+			if(var_parameter_max < 0) return false;
+						
+			//first try to randomly generate the location
+			int attempts = 0;		
+			
+			boolean sideObtained = false;
+			
+			while(!sideObtained && attempts++ < Def.TRY_ATTEMPTS){
+				DoublePoint pp = null;
+				if(zz == 0)
+					pp = createEntrance(rand, var_parameter_max, var_parameter_min, var_parameter_set, x_const, faces.get(zz), rm1_exclusions, false);
+				else{
+					int index = -1;
+					for(int ii = 0; ii < rm1_entrance_reference.size(); ii++){
+						if(rm1_entrance_reference.get(ii).equals(entrances.get(0))){
+							index = ii;
+							break;
+						}
+					}
+					
+					if(index == -1){
+						rm1_entrance_reference.add(entrances.get(0));
+						rm2_exclusions.add(new ArrayList<DoublePoint>());
+						index = rm1_entrance_reference.size()-1;
+					}
+					
+					pp = createEntrance(rand, var_parameter_max, var_parameter_min, var_parameter_set, x_const, faces.get(zz), rm2_exclusions.get(index), false);
 				}
 				
-				//if start location is not big enough, fail side
-				if(var_parameter_max < 0) side_fail = true;
 				
-				if(!side_fail){
-					
-					//first try to randomly generate the location
-					int attempts = 0;
-					
-					
-					while(attempts++ < Def.TRY_ATTEMPTS && !side_fail && !side_obtained){
-						open_found = false;
-						//IV: Generate a bounded start location
-						var_parameter_set = rand.nextInt(var_parameter_max + 1);
-						
-						//V:Create a point of that location
-						Point gp;
-						if(x_const){
-							gp = new Point(cur_side.get(0).x, var_parameter_set + var_parameter_min);
-						} else{
-							gp = new Point(var_parameter_set + var_parameter_min, cur_side.get(0).y);
+				//check if excluded
+				if(pp != null){
+					if(zz == 0){
+						for(int ii = 0; ii < rm1_exclusions.size(); ii++){
+							if(rm1_exclusions.get(ii).equals(pp)){
+								pp = null;
+								break;
+							}							
+						}
+					}else{
+						int index = -1;
+						for(int ii = 0; ii < rm1_entrance_reference.size(); ii++){
+							if(rm1_entrance_reference.get(ii).equals(entrances.get(0))){
+								index = ii;
+								break;
+							}
 						}
 						
-						//VI: Check point for an opening by checking one square on all sides. Only one point should exist.
-						Point location = new Point(-1,-1);
-						for(int qq = -1; qq <= 1; qq++){
-								for(int ww = -1; ww <= 1; ww++){
-									if((qq == 0 || ww == 0) && !(qq == 0 && ww == 0)){
-											System.out.print("(" + (gp.x+qq) + "," + (gp.y+ww) + ")");
-										if((gp.x+qq >= 0) && (gp.x+qq < grid_x) && (gp.y+ww >= 0) && (gp.y+ww < grid_y))
-											System.out.println(" = " + grid.get(gp.x+qq).get(gp.y+ww));
-										if((gp.x+qq >= 0) && (gp.x+qq < grid_x) && (gp.y+ww >= 0) && (gp.y+ww < grid_y) && grid.get(gp.x+qq).get(gp.y+ww) == Def.UNASSIGNED_CODE){
-											if(open_found){
-												System.out.println("Algorithm fault. Extra opening exists at (" + gp.x+qq + "," + gp.y+ww + "). Centered at (" + gp.x + "," + gp.y + ")");
-												while(true);
-											} else{
-												open_found = true;
-												location = new Point(gp.x+qq, gp.y+ww);
-											}
-										}
-									}
-								}
-						}
-						
-						boolean increment = false, x_direction = false;
-						int var = 0;
-						if(gp.x == location.x){
-								var = gp.y;
-								if(gp.y < location.y)
-									increment = true;
-						} else{
-								x_direction = true;
-								var = gp.x;
-								if(gp.x < location.x)
-									increment = true;
-						 }
-						
-						//VII:Check if point out of bounds
-						side_fail = true;
-						if(increment && x_direction && var + 2 + hallL >= grid_x)
-							break;
-						if(increment && !x_direction && var + 2 + hallL >= grid_y)
-							break;
-						if(!increment && var - 2 - hallL <= 0)
-							break;
-						side_fail = false;							
-						
-						//VIII:If still good check all points
-						if(open_found){
-							Point start_range = new Point(0,0), end_range = new Point(0,0);
-							if(x_direction && increment){
-								start_range = new Point(gp.x + 1,gp.y-1);
-								end_range = new Point(gp.x + 1 + hallL + 1, gp.y + hallL);
-							}
-							else if(x_direction && !increment){
-								start_range = new Point(gp.x - 1, gp.y - 1);
-								end_range = new Point(gp.x - 1 - hallL - 1, gp.y + hallL);
-							}
-							else if(!x_direction && increment){
-								start_range = new Point(gp.x-1, gp.y+1);
-								end_range = new Point(gp.x + hallL, gp.y+1+hallL+1);
-							}
-							else if(!x_direction && !increment){
-								start_range = new Point(gp.x - 1, gp.y - 1);
-								end_range = new Point(gp.x + hallL, gp.y - 1 - hallL - 1);
-							}
-							
-							for(int qq = Def.min(start_range.x, end_range.x); qq <= Def.max(end_range.x, start_range.x); qq++){
-								for(int ww = Def.min(start_range.y, end_range.y); ww <= Def.max(start_range.y, end_range.y); ww++){
-									if(grid.get(qq).get(ww) != Def.UNASSIGNED_CODE)
-										open_found = false;
-									//update(qq,ww,Def.CURRENTLY_SENSING_AREA_CODE);
-								}
-							}
-						 }
-					/*	
-						//Check exclusions
-						Point ex_c_start_point = new Point(-1,-1);
-						Point ex_c_end_point = new Point(-1,-1);
-						if(x_direction && increment){
-							ex_c_start_point = new Point(gp.x, gp.y - (hallL-1));
-							ex_c_end_point = new Point(gp.x, gp.y);
-						} else if(x_direction && !increment){
-							ex_c_start_point = new Point(gp.x, gp.y);
-							ex_c_end_point = new Point(gp.x, gp.y + (hallL-1));
-						} else if(!x_direction && increment){
-							ex_c_start_point = new Point(gp.x - (hallL-1), gp.y);
-							ex_c_end_point = new Point(gp.x, gp.y);
-						} else if(!x_direction && !increment){
-							ex_c_start_point = new Point(gp.x, gp.y);
-							ex_c_end_point = new Point(gp.x + (hallL - 1), gp.y);
-						}
-						
-						ArrayList<Point> entrance_check = new ArrayList<Point>();
-						entrance_check.add(ex_c_start_point);
-						entrance_check.add(ex_c_end_point);
-						if(exclusions.contains(entrance_check))
-							open_found = false;
-						else
-							my_rooms.get(zz).entrance_points.add(entrance_check);
-						*/
-						
-						//IX: If still good, make the entrance
-						if(open_found){
-							side_obtained = true;
-							
-							if(x_direction && increment){
-								for(int qq = 0; qq < hallL; qq++){
-									//update(gp.x, gp.y-qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
-									entrance.add(new Point(gp.x, gp.y-qq));
-								}
-							}
-							else if(x_direction && !increment){
-								for(int qq = 0; qq < hallL; qq++){
-									//update(gp.x, gp.y+qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
-									entrance.add(new Point(gp.x, gp.y+qq));
-								}
-							}
-							else if(!x_direction && increment){
-								for(int qq = 0; qq < hallL; qq++){
-									//update(gp.x-qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-									entrance.add(new Point(gp.x-qq, gp.y));
-								}
-							}
-							else if(!x_direction && !increment){
-								for(int qq = 0; qq < hallL; qq++){
-									//update(gp.x+qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-									entrance.add(new Point(gp.x+qq, gp.y));
-								}
-							}
-							
-							ArrayList<Point> entr = new ArrayList<Point>();
-							entr.add(entrance.get(0));
-							entr.add(entrance.get(entrance.size()-1));
-							
-							if(exclusions.get(zz).containsKey(entr))
-								side_obtained = false;
-							else break;
-						 }
-					}
-
-
-					if(!side_fail && !side_obtained){
-						for(int tt = 0; tt < var_parameter_max; tt++){
-							
-							open_found = false;
-							//IV: Generate a bounded start location
-							var_parameter_set = tt;
-							
-							//V:Create a point of that location
-							Point gp;
-							if(x_const){
-								gp = new Point(cur_side.get(0).x, var_parameter_set + var_parameter_min);
-							} else{
-								gp = new Point(var_parameter_set + var_parameter_min, cur_side.get(0).y);
-							}
-							
-							//VI: Check point for an opening by checking one square on all sides. Only one point should exist.
-							Point location = new Point(-1,-1);
-							for(int qq = -1; qq <= 1; qq++){
-									for(int ww = -1; ww <= 1; ww++){
-										if((qq == 0 || ww == 0) && !(qq == 0 && ww == 0)){
-												System.out.print("(" + (gp.x+qq) + "," + (gp.y+ww) + ")");
-											if((gp.x+qq >= 0) && (gp.x+qq < grid_x) && (gp.y+ww >= 0) && (gp.y+ww < grid_y))
-												System.out.println(" = " + grid.get(gp.x+qq).get(gp.y+ww));
-											if((gp.x+qq >= 0) && (gp.x+qq < grid_x) && (gp.y+ww >= 0) && (gp.y+ww < grid_y) && grid.get(gp.x+qq).get(gp.y+ww) == Def.UNASSIGNED_CODE){
-												if(open_found){
-													System.out.println("Algorithm fault. Extra opening exists at (" + gp.x+qq + "," + gp.y+ww + "). Centered at (" + gp.x + "," + gp.y + ")");
-													while(true);
-												} else{
-													open_found = true;
-													location = new Point(gp.x+qq, gp.y+ww);
-												}
-											}
-										}
-									}
-							}
-							
-							boolean increment = false, x_direction = false;
-							int var = 0;
-							if(gp.x == location.x){
-									var = gp.y;
-									if(gp.y < location.y)
-										increment = true;
-							} else{
-									x_direction = true;
-									var = gp.x;
-									if(gp.x < location.x)
-										increment = true;
-							 }
-							
-							//VII:Check if point out of bounds
-							side_fail = true;
-							if(increment && x_direction && var + 2 + hallL >= grid_x)
+						for(int ii = 0; ii < rm2_exclusions.get(index).size(); ii++){
+							if(rm2_exclusions.get(index).get(ii).equals(pp)){
+								pp = null;
 								break;
-							if(increment && !x_direction && var + 2 + hallL >= grid_y)
-								break;
-							if(!increment && var - 2 - hallL <= 0)
-								break;
-							side_fail = false;							
-							
-							//VIII:If still good check all points
-							if(open_found){
-								Point start_range = new Point(0,0), end_range = new Point(0,0);
-								if(x_direction && increment){
-									start_range = new Point(gp.x + 1,gp.y-1);
-									end_range = new Point(gp.x + 1 + hallL + 1, gp.y + hallL);
-								}
-								else if(x_direction && !increment){
-									start_range = new Point(gp.x - 1, gp.y - 1);
-									end_range = new Point(gp.x - 1 - hallL - 1, gp.y + hallL);
-								}
-								else if(!x_direction && increment){
-									start_range = new Point(gp.x-1, gp.y+1);
-									end_range = new Point(gp.x + hallL, gp.y+1+hallL+1);
-								}
-								else if(!x_direction && !increment){
-									start_range = new Point(gp.x - 1, gp.y - 1);
-									end_range = new Point(gp.x + hallL, gp.y - 1 - hallL - 1);
-								}
-								
-								for(int qq = Def.min(start_range.x, end_range.x); qq <= Def.max(end_range.x, start_range.x); qq++){
-									for(int ww = Def.min(start_range.y, end_range.y); ww <= Def.max(start_range.y, end_range.y); ww++){
-										if(grid.get(qq).get(ww) != Def.UNASSIGNED_CODE)
-											open_found = false;
-										//update(qq,ww,Def.CURRENTLY_SENSING_AREA_CODE);
-									}
-								}
-							 }
-							//IX: If still good, make the entrance
-							if(open_found){
-								side_obtained = true;
-								
-								if(x_direction && increment){
-									for(int qq = 0; qq < hallL; qq++){
-										//update(gp.x, gp.y-qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
-										entrance.add(new Point(gp.x, gp.y-qq));
-									}
-								}
-								else if(x_direction && !increment){
-									for(int qq = 0; qq < hallL; qq++){
-										//update(gp.x, gp.y+qq, Def.CURRENTLY_SEARCHING_AREA_CODE);
-										entrance.add(new Point(gp.x, gp.y+qq));
-									}
-								}
-								else if(!x_direction && increment){
-									for(int qq = 0; qq < hallL; qq++){
-										//update(gp.x-qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-										entrance.add(new Point(gp.x-qq, gp.y));
-									}
-								}
-								else if(!x_direction && !increment){
-									for(int qq = 0; qq < hallL; qq++){
-										//update(gp.x+qq, gp.y, Def.CURRENTLY_SEARCHING_AREA_CODE);
-										entrance.add(new Point(gp.x+qq, gp.y));
-									}
-								}
-								ArrayList<Point> entr = new ArrayList<Point>();
-								entr.add(entrance.get(0));
-								entr.add(entrance.get(entrance.size()-1));
-								
-								if(exclusions.get(zz).containsKey(entr))
-									side_obtained = false;
-								else break;
-							 }
+							}
 						}
 					}
 				}
-				if(!side_obtained){
-					boolean new_side_found = false;
-					for(int qq = 0; qq < all_sides.size(); qq++){
-						if(!check.get(all_sides.get(qq))){
-							new_side_found = true;
-							cur_side = all_sides.get(qq);
-							break;
+				
+				//IX: If still good, make the entrance
+				if(pp != null){					
+					entrance = pp;
+					entrances.add(entrance);
+					sideObtained = true;
+				}
+			}
+			if(!sideObtained){
+				for(int tt = 0; tt < var_parameter_max; tt++){
+					DoublePoint pp = null;
+					if(zz == 0)
+						pp = createEntrance(rand, var_parameter_max, var_parameter_min, tt, x_const, faces.get(zz), rm1_exclusions, true);
+					else{
+						int index = -1;
+						for(int ii = 0; ii < rm1_entrance_reference.size(); ii++){
+							if(rm1_entrance_reference.get(ii).equals(entrances.get(0))){
+								index = ii;
+								break;
+							}
+						}
+						
+						if(index == -1){
+							rm1_entrance_reference.add(entrances.get(0));
+							rm2_exclusions.add(new ArrayList<DoublePoint>());
+							index = rm1_entrance_reference.size()-1;
+						}
+						
+						pp = createEntrance(rand, var_parameter_max, var_parameter_min, var_parameter_set, x_const, faces.get(zz), rm2_exclusions.get(index), true);
+					}
+					
+					
+					//check if excluded
+					if(pp != null){
+						if(zz == 0){
+							for(int ii = 0; ii < rm1_exclusions.size(); ii++){
+								if(rm1_exclusions.get(ii).equals(pp)){
+									pp = null;
+									break;
+								}							
+							}
+						}else{
+							int index = -1;
+							for(int ii = 0; ii < rm1_entrance_reference.size(); ii++){
+								if(rm1_entrance_reference.get(ii).equals(entrances.get(0))){
+									index = ii;
+									break;
+								}
+							}
+							
+							for(int ii = 0; ii < rm2_exclusions.get(index).size(); ii++){
+								if(rm2_exclusions.get(index).get(ii).equals(pp)){
+									pp = null;
+									break;
+								}
+							}
 						}
 					}
-					//room doesn't work
-					if(!new_side_found){
-						output.clear();
-						output.add(new Point(zz,-1));
-						return output;
-					}
-				} else{
-					output.add(entrance.get(0));
-					output.add(entrance.get(entrance.size()-1));
+					//IX: If still good, make the entrance
+					if(pp != null){					
+						entrance = pp;
+						entrances.add(entrance);
+						sideObtained = true;
+						break;
+					}	
 				}
+			}
+			if(!sideObtained && zz == 0) return false;
+			else if(!sideObtained && zz == 1){ 
+				zz--;
+				rm1_exclusions.add(entrances.get(0));
+				entrances.clear();
+			}
+			else{
+				if(zz == 0) zz++;
+				else{
+					ArrayList<Point> pts = new ArrayList<Point>();
+					pts.add(entrances.get(0).p1);
+					pts.add(entrances.get(0).p2);
+					pts.add(entrances.get(1).p1);
+					pts.add(entrances.get(1).p2);
+					pass = pathing(rand, rooms, rm_1, rm_2, pts, new Point(-1,-1), new Point(-1,-1));
+					if(!pass){
+						int index = -1;
+						for(int ii = 0; ii < rm1_entrance_reference.size(); ii++){
+							if(rm1_entrance_reference.get(ii).equals(entrances.get(0))){
+								index = ii;
+								break;
+							}
+						}
+						rm2_exclusions.get(index).add(entrances.get(1));		
+						entrances.remove(1);
+					} else{
+						rooms.get(rm_1).entrance_points.add(entrances.get(0));
+						rooms.get(rm_2).entrance_points.add(entrances.get(1));
+					}
+				}		
 			}
 		}
+		return true;
+	}
+	
+	public DoublePoint createEntrance(Random rand, int var_parameter_max, int var_parameter_min, int var_parameter_set, boolean x_const, DoublePoint side, ArrayList<DoublePoint> exclusions, boolean set){
+		int hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE, grid_x = grid.size(), grid_y = grid.get(0).size();
+		
+		if(!set) var_parameter_set = rand.nextInt(var_parameter_max + 1);
+		
+		Point gp;
+		if(x_const){
+			gp = new Point(side.p1.x, var_parameter_set + var_parameter_min);
+		} else{
+			gp = new Point(var_parameter_set + var_parameter_min, side.p1.y);
+		}
+		
+		boolean open_found = false;
+		Point location = new Point(-1,-1);
+		for(int qq = -1; qq <= 1; qq++){
+				for(int ww = -1; ww <= 1; ww++){
+					if((qq == 0 || ww == 0) && !(qq == 0 && ww == 0)){
+						//	System.out.print("(" + (gp.x+qq) + "," + (gp.y+ww) + ")");
+						if((gp.x+qq >= 0) && (gp.x+qq < grid_x) && (gp.y+ww >= 0) && (gp.y+ww < grid_y))
+						//	System.out.println(" = " + grid.get(gp.x+qq).get(gp.y+ww));
+						if((gp.x+qq >= 0) && (gp.x+qq < grid_x) && (gp.y+ww >= 0) && (gp.y+ww < grid_y) && grid.get(gp.x+qq).get(gp.y+ww) == Def.UNASSIGNED_CODE){
+							if(open_found){
+								System.out.println("Algorithm fault. Extra opening exists at (" + gp.x+qq + "," + gp.y+ww + "). Centered at (" + gp.x + "," + gp.y + ")");
+								while(true);
+							} else{
+								open_found = true;
+								location = new Point(gp.x+qq, gp.y+ww);
+							}
+						}
+					}
+				}
+		}
+		
+		boolean increment = false, x_direction = false;
+		int var = 0;
+		if(gp.x == location.x){
+				var = gp.y;
+				if(gp.y < location.y)
+					increment = true;
+		} else{
+				x_direction = true;
+				var = gp.x;
+				if(gp.x < location.x)
+					increment = true;
+		 }
+		
+		DoublePoint entr = new DoublePoint(new Point(-1,-1), new Point(-1, -1));
+		if(x_direction && increment) entr = new DoublePoint(new Point(gp.x, gp.y), new Point(gp.x, gp.y - (hallL-1)));
+		else if(x_direction && !increment) entr = new DoublePoint(new Point(gp.x, gp.y), new Point(gp.x, gp.y + (hallL-1)));
+		else if(!x_direction && increment) entr = new DoublePoint(new Point(gp.x - (hallL-1), gp.y), new Point(gp.x, gp.y));
+		else if(!x_direction && !increment) entr = new DoublePoint(new Point(gp.x + (hallL-1), gp.y), new Point(gp.x, gp.y));
+		
+		
+		
+		if(checkEntrance(gp, increment, x_direction, var))		
+			return entr;
+		else{
+			exclusions.add(entr);
+			return null;
+		}
+	}
+	
+	public boolean checkEntrance(Point gp, boolean increment, boolean x_direction, int var){
+		
+		int hallL = Def.HALLWAY_LENGTH_FT/Def.FT_PER_SQUARE, grid_x = grid.size(), grid_y = grid.get(0).size();
+		
+		//VI: Check point for an opening by checking one square on all sides. Only one point should exist.
+		boolean open_found = true;
+		//VII:Check if point out of bounds
+		if(increment && x_direction && var + 2 + hallL >= grid_x)
+			return false;
+		if(increment && !x_direction && var + 2 + hallL >= grid_y)
+			return false;
+		if(!increment && var - 2 - hallL <= 0)
+			return false;						
+		
+		//VIII:If still good check all points
+		if(open_found){
+			Point start_range = new Point(0,0), end_range = new Point(0,0);
+			if(x_direction && increment){
+				start_range = new Point(gp.x + 1,gp.y-1);
+				end_range = new Point(gp.x + 1 + hallL + 1, gp.y + hallL);
+			}
+			else if(x_direction && !increment){
+				start_range = new Point(gp.x - 1, gp.y - 1);
+				end_range = new Point(gp.x - 1 - hallL - 1, gp.y + hallL);
+			}
+			else if(!x_direction && increment){
+				start_range = new Point(gp.x-1, gp.y+1);
+				end_range = new Point(gp.x + hallL, gp.y+1+hallL+1);
+			}
+			else if(!x_direction && !increment){
+				start_range = new Point(gp.x - 1, gp.y - 1);
+				end_range = new Point(gp.x + hallL, gp.y - 1 - hallL - 1);
+			}
 			
-		return output;
+			for(int qq = Def.min(start_range.x, end_range.x); qq <= Def.max(end_range.x, start_range.x); qq++){
+				for(int ww = Def.min(start_range.y, end_range.y); ww <= Def.max(start_range.y, end_range.y); ww++){
+					try{
+						if(qq < 0 || qq >= grid_x || ww < 0 || ww >= grid_y)
+							return false;
+						else if(grid.get(qq).get(ww) != Def.UNASSIGNED_CODE)
+							return false;
+						//update(qq,ww,Def.CURRENTLY_SENSING_AREA_CODE);
+					} catch(Exception ee){
+						System.out.println("Exception");
+					}
+				}
+			}
+		 }
+		return open_found;
 	}
 
-	
 	private int find_closest_room(ArrayList<room> rooms, int cur_room){
 		Point x1y1 = rooms.get(cur_room).start, x1y2 = new Point(rooms.get(cur_room).start.x, rooms.get(cur_room).end.y), x2y1 = new Point(rooms.get(cur_room).end.x, rooms.get(cur_room).start.y), x2y2 = rooms.get(cur_room).end; 
 		ArrayList<Point> cur_points = new ArrayList<Point>();
@@ -971,7 +965,7 @@ public class Map {
 		int closest_room = -1;
 		double distance = -1;
 		boolean found = false;
-		ArrayList<Integer> exclusions = rooms.get(cur_room).exclusions;
+		ArrayList<Integer> exclusions = rooms.get(cur_room).room_exclusions;
 		for(int ii = 0; ii < rooms.size(); ii++){
 			if(ii != cur_room && exclusions.contains(ii) == false){
 				found = true;
@@ -997,68 +991,7 @@ public class Map {
 		if(!found)
 			return -1;
 		return closest_room;
-	}
-	
-	private ArrayList<Point> find_opposing_faces(ArrayList<room> rooms, int rm_1, int rm_2){
-		room rm1 = rooms.get(rm_1), rm2 = rooms.get(rm_2);
-		Point x1y1_1 = rm1.start, x2y2_1 = rm1.end;
-		Point x1y2_1 = new Point(x1y1_1.x, x2y2_1.y), x2y1_1 = new Point(x2y2_1.x, x1y1_1.y);
-		Point x1y1_2 = rm2.start, x2y2_2 = rm2.end;
-		Point x1y2_2 = new Point(x1y1_2.x, x2y2_2.y), x2y1_2 = new Point(x2y2_2.x, x1y1_2.y);
-	
-		ArrayList<Point> centerpoints_1 = new ArrayList<Point>();
-		ArrayList<Point> coords_1 = new ArrayList<Point>();
-		centerpoints_1.add(new Point((x1y1_1.x+x2y1_1.x)/2,(x1y1_1.y+x2y1_1.y)/2));
-		coords_1.add(x1y1_1);
-		coords_1.add(x2y1_1);
-		centerpoints_1.add(new Point((x2y1_1.x+x2y2_1.x)/2,(x2y1_1.y+x2y2_1.y)/2));
-		coords_1.add(x2y1_1);
-		coords_1.add(x2y2_1);
-		centerpoints_1.add(new Point((x2y2_1.x+x1y2_1.x)/2,(x2y2_1.y+x1y2_1.y)/2));
-		coords_1.add(x2y2_1);
-		coords_1.add(x1y2_1);
-		centerpoints_1.add(new Point((x1y2_1.x+x1y1_1.x)/2,(x1y2_1.y+x1y1_1.y)/2));
-		coords_1.add(x1y2_1);
-		coords_1.add(x1y1_1);
-		
-		ArrayList<Point> centerpoints_2 = new ArrayList<Point>();
-		ArrayList<Point> coords_2 = new ArrayList<Point>();
-		centerpoints_2.add(new Point((x1y1_2.x+x2y1_2.x)/2,(x1y1_2.y+x2y1_2.y)/2));
-		coords_2.add(x1y1_2);
-		coords_2.add(x2y1_2);
-		centerpoints_2.add(new Point((x2y1_2.x+x2y2_2.x)/2,(x2y1_2.y+x2y2_2.y)/2));
-		coords_2.add(x2y1_2);
-		coords_2.add(x2y2_2);
-		centerpoints_2.add(new Point((x2y2_2.x+x1y2_2.x)/2,(x2y2_2.y+x1y2_2.y)/2));
-		coords_2.add(x2y2_2);
-		coords_2.add(x1y2_2);
-		centerpoints_2.add(new Point((x1y2_2.x+x1y1_2.x)/2,(x1y2_2.y+x1y1_2.y)/2));
-		coords_2.add(x1y2_2);
-		coords_2.add(x1y1_2);
-		
-		int dir_1 = 0, dir_2 = 0;
-		double distance = -1;
-		for(int ii = 0; ii < centerpoints_1.size(); ii++){
-			for(int jj = 0; jj < centerpoints_2.size(); jj++){
-				double cur_distance = Def.get_distance(centerpoints_1.get(ii), centerpoints_2.get(jj));
-				if(distance == -1 || distance > cur_distance){
-					distance = cur_distance;
-					dir_1 = ii;
-					dir_2 = jj;
-				}
-			}
-		}
-		
-		ArrayList<Point> output = new ArrayList<Point>();
-		output.add(coords_1.get(dir_1*2));
-		output.add(coords_1.get((dir_1*2) + 1));
-		output.add(coords_2.get(dir_2*2));
-		output.add(coords_2.get((dir_2*2) + 1));
-		
-		return output;
-	}
-	
-	
+	}	
 	
 	/**
 	 * gets the value at the specified xx, yy values
@@ -1154,6 +1087,21 @@ public class Map {
 	}
 	
 	/**
+	 * Prints a ascii version of the map to map.txt
+	 * @throws IOException - if there is an issue with map.txt
+	 */
+	public void printMap(String file) throws IOException{
+		BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+		for(int ii = 0; ii < grid.size(); ii++){
+			for(int jj = 0; jj < grid.get(ii).size(); jj++){
+				bw.write('0' + grid.get(ii).get(jj));
+			}
+			bw.write("\r\n");
+		}		
+		bw.close();
+	}
+	
+	/**
 	 * Attaches GUI object to Map object
 	 * @param gui
 	 */
@@ -1198,7 +1146,7 @@ class room{
 	public ArrayList<Integer> room_exclusions = new ArrayList<Integer>();
 	public ArrayList<DoublePoint> faces = new ArrayList<DoublePoint>();
 	public ArrayList<ArrayList<DoublePoint>> face_exclusions = new ArrayList<ArrayList<DoublePoint>>();
-	public ArrayList<ArrayList<ArrayList<DoublePoint>>> entrance_exclusions = new ArrayList<ArrayList<ArrayList<DoublePoint>>>();
+	public ArrayList<ArrayList<ArrayList<DoublePoint>>> opposing_face_exclusions = new ArrayList<ArrayList<ArrayList<DoublePoint>>>();
 	
 	public Map mm;
 	public int connections;
@@ -1220,7 +1168,7 @@ class room{
 				ArrayList<DoublePoint> qqq = new ArrayList<DoublePoint>();
 				fff.add(qqq);
 			}
-			entrance_exclusions.add(fff);
+			opposing_face_exclusions.add(fff);
 		}
 	}
 
@@ -1235,6 +1183,32 @@ class room{
 		faces.add(new DoublePoint(x1y2, x2y2));
 		faces.add(new DoublePoint(x2y2, x2y1));
 		faces.add(new DoublePoint(x2y1, x1y1));
+	}
+	
+	public void addBorder(){
+		ArrayList<Point> fillPoints = new ArrayList<Point>();
+		ArrayList<Point> entrancePoints = new ArrayList<Point>();
+		
+		for(int ii = 0; ii < entrance_points.size(); ii++){
+			DoublePoint p = entrance_points.get(ii);
+			for(int jj = p.p1.x; jj <= p.p2.x; jj++){
+				for(int kk = p.p1.y; kk <= p.p2.y; kk++)
+					entrancePoints.add(new Point(jj, kk));
+			}
+		}
+		
+		for(int ii = 0; ii < faces.size(); ii++){
+			DoublePoint p = faces.get(ii);
+			for(int jj = p.p1.x; jj <= p.p2.x; jj++){
+				for(int kk = p.p1.y; kk <= p.p2.y; kk++){
+					if(!entrancePoints.contains(new Point(jj, kk)))
+						fillPoints.add(new Point(jj, kk));
+				}
+			}
+		}
+		
+		for(int ii = 0; ii < fillPoints.size(); ii++)
+			mm.update(fillPoints.get(ii).x, fillPoints.get(ii).y, Def.WALL_CODE);
 	}
 	
 	public boolean isRoomExcluded(int room){
@@ -1260,14 +1234,14 @@ class room{
 		return true;
 	}
 	
-	public boolean isEntranceExcluded(int room, DoublePoint face, DoublePoint entrance){
-		if(room >= 0 && room < entrance_exclusions.size() && room != ID){
-			ArrayList<ArrayList<DoublePoint>> fff = entrance_exclusions.get(room);
+	public boolean isOpposingFaceExcluded(int room, DoublePoint face, DoublePoint oface){
+		if(room >= 0 && room < opposing_face_exclusions.size() && room != ID){
+			ArrayList<ArrayList<DoublePoint>> fff = opposing_face_exclusions.get(room);
 			for(int ii = 0; ii < faces.size(); ii++){
 				if(faces.get(ii).equals(face)){
 					ArrayList<DoublePoint> qqq = fff.get(ii);
 					for(int jj = 0; jj < qqq.size(); jj++){
-						if(qqq.get(jj).equals(entrance))
+						if(qqq.get(jj).equals(oface))
 							return true;
 					}
 					return false;
@@ -1284,9 +1258,9 @@ class room{
 		return null;
 	}
 	
-	public ArrayList<DoublePoint> getEntranceExclusions(int room, DoublePoint face){
+	public ArrayList<DoublePoint> getOpposingFaceExclusions(int room, DoublePoint face){
 		if(room >= 0 && room < face_exclusions.size()){
-			ArrayList<ArrayList<DoublePoint>> fff = entrance_exclusions.get(room);
+			ArrayList<ArrayList<DoublePoint>> fff = opposing_face_exclusions.get(room);
 			for(int ii = 0; ii < faces.size(); ii++){
 				if(faces.get(ii).equals(face)){
 					return fff.get(ii);
@@ -1306,11 +1280,13 @@ class room{
 		}
 	}
 	
-	public void excludeEntrance(int room, DoublePoint face, DoublePoint entrance){
-		if(room >= 0 && room < entrance_exclusions.size()){
+	public void excludeOpposingFace(int room, DoublePoint face, DoublePoint oface){
+		if(room >= 0 && room < opposing_face_exclusions.size()){
 			for(int ii = 0; ii < faces.size(); ii++){
 				if(faces.get(ii).equals(face)){
-					entrance_exclusions.get(room).get(ii).add(entrance);
+					opposing_face_exclusions.get(room).get(ii).add(oface);
+					if(opposing_face_exclusions.get(room).get(ii).size() == 4)
+						face_exclusions.get(room).add(face);
 					return;
 				}
 			}
@@ -1353,5 +1329,12 @@ class DoublePoint{
 		if(p1.x == p.p1.x && p1.y == p.p1.y && p2.x == p.p2.x && p2.y == p.p2.y)
 			return true;
 		return false;
+	}
+	
+	public double getDistance(DoublePoint p){
+		Point centerPoint1, centerPoint2;
+		centerPoint1 = new Point((p1.x+p2.x)/2, (p1.y+p2.y)/2);
+		centerPoint2 = new Point((p.p1.x + p.p2.x)/2, (p.p1.y+p.p2.y)/2);
+		return Def.get_distance(centerPoint1, centerPoint2);
 	}
 }
