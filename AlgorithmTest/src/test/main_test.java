@@ -6,6 +6,7 @@ package test;
 import gui.GUI;
 import defaults.Def;
 import map.Map;
+import map.SensorMap;
 import quadcopter.Quadcopter;
 
 import java.io.BufferedReader;
@@ -41,7 +42,8 @@ public class main_test {
 			Def.output(bw, String.format("Started creating map at %dms\r\n", System.currentTimeMillis() - time_start));
 			time_elapsed = System.currentTimeMillis();
 			Map new_map = new Map(bw);
-			GUI gg = new GUI(bw, new_map);
+			SensorMap sensor_map = new SensorMap();
+			GUI gg = new GUI(bw, new_map, sensor_map);
 			new_map.attachGUI(gg);
 			//new_map.generate(Def.SEED);
 			//new_map.printMap("sample_map_2.txt");

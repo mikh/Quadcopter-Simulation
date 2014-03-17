@@ -29,7 +29,7 @@ import gui.GUI;
  *   8 - currently searching
  *   9 - path (sensed and searched)
  */
-public class Map {
+public class Map extends ProtoMap{
 	
 	//maintains a numeric code 2d array
 	private ArrayList<ArrayList<Integer>> grid;
@@ -999,6 +999,7 @@ public class Map {
 	 * @param yy
 	 * @return -1 if xx,yy are invalid or the value in the grid
 	 */
+	@Override
 	public int get(int xx, int yy){
 		if(xx < 0 || xx > grid.size())
 			return -1;

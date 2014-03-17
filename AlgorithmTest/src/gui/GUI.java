@@ -4,6 +4,7 @@ package gui;
 //TODO: Streamline
 
 import defaults.Def;
+import map.ProtoMap;
 import map.Map;
 
 import java.awt.Color;
@@ -12,6 +13,8 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,12 +27,12 @@ public class GUI {
 	
 	private JFrame frame_map, frame_dynamic, frame_sensor, frame_stats;
 	private BufferedWriter log;
-	private full_grid grid;
+	private full_grid grid, grid_sensor;
 	private internal_grid i_grid;
 	
 	
 	@SuppressWarnings("unused")
-	public GUI(BufferedWriter log_file, Map mmap) throws IOException{
+	public GUI(BufferedWriter log_file, ProtoMap mmap, ProtoMap sensor_map) throws IOException{
 		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");	//prevent a exception due to a JDK bug
 		
 		/* Crash Exception Testing */
@@ -65,27 +68,58 @@ public class GUI {
 		frame_map.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame_map.setSize(Def.FRAME_SIZE_X, Def.FRAME_SIZE_Y);
 		frame_map.setLayout(new GridBagLayout());
+		frame_map.setLocation(Def.FRAME_POSITION_X, Def.FRAME_POSITION_Y);
 		
 		frame_dynamic = new JFrame("Dynamic Map");
 		frame_dynamic.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame_dynamic.setSize(Def.FRAME_DYNAMIC_SIZE_X, Def.FRAME_DYNAMIC_SIZE_Y);
+		frame_dynamic.setLocation(Def.FRAME_DYNAMIC_POSITION_X, Def.FRAME_DYNAMIC_POSITION_Y);
 		
 		frame_sensor = new JFrame("Sensor Map");
 		frame_sensor.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame_sensor.setSize(Def.FRAME_SENSOR_SIZE_X, Def.FRAME_SENSOR_SIZE_Y);
+		frame_sensor.setLocation(Def.FRAME_SENSOR_POSITION_X, Def.FRAME_SENSOR_POSITION_Y);
 		
 		frame_stats = new JFrame("Statistics");
 		frame_stats.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame_stats.setSize(Def.FRAME_STATS_SIZE_X, Def.FRAME_STATS_SIZE_Y);
+		frame_stats.setLocation(Def.FRAME_STATS_POSITION_X, Def.FRAME_STATS_POSITION_Y);
+		
+		//frame_map.setUndecorated(true);
+		//frame_map.setBackground(Def.FRAME_COLOR);
 		
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 0;
 		c.gridheight = 5;
-		grid = new full_grid(log, mmap);
+		grid = new full_grid(log, mmap, frame_map, Def.MAP_SIZE_FT_X, Def.MAP_SIZE_FT_Y);
 		frame_map.add(grid, c);
+			
+		frame_map.addComponentListener(new ComponentListener(){
+			
+			@Override
+			public void componentResized(ComponentEvent evt){
+				grid.resize();
+			}
+
+			@Override public void componentHidden(ComponentEvent arg0) {}
+			@Override public void componentMoved(ComponentEvent arg0) {}
+			@Override public void componentShown(ComponentEvent arg0) {}
+		});
 		
+		grid_sensor = new full_grid(log, sensor_map, frame_sensor, Def.SENSOR_MAP_SIZE_X, Def.SENSOR_MAP_SIZE_Y);
+		frame_sensor.add(grid_sensor);
+		frame_sensor.addComponentListener(new ComponentListener(){
+			@Override
+			public void componentResized(ComponentEvent evt){
+				grid_sensor.resize();
+			}
+
+			@Override public void componentHidden(ComponentEvent arg0) {}
+			@Override public void componentMoved(ComponentEvent arg0) {}
+			@Override public void componentShown(ComponentEvent arg0) {}
+		});
 
 		frame_map.setVisible(true);
 		frame_dynamic.setVisible(true);
@@ -116,13 +150,16 @@ class full_grid extends JPanel{
 	private int sqsi;
 	private BufferedWriter log;
 	ArrayList<ArrayList<square>> grid;
+	private JFrame jf;
+	private int sq_row, sq_col;
 	
 	@SuppressWarnings("unused")
-	public full_grid(BufferedWriter log_file, Map mmap) throws IOException{
+	public full_grid(BufferedWriter log_file, ProtoMap mmap, JFrame frame, int ft_x, int ft_y) throws IOException{
 		log = log_file;
+		jf = frame;
 		
 		log.write("Obtaining number of squares...\t");
-		int xx = Def.MAP_SIZE_FT_X, yy = Def.MAP_SIZE_FT_Y;
+		int xx = ft_x, yy = ft_y;
 		
 		if((Def.MAP_SIZE_FT_X % Def.FT_PER_SQUARE) != 0){
 			xx += Def.FT_PER_SQUARE - (Def.MAP_SIZE_FT_X % Def.FT_PER_SQUARE);
@@ -134,7 +171,8 @@ class full_grid extends JPanel{
 
 		}
 		
-		int sq_row = xx/Def.FT_PER_SQUARE, sq_col = yy/Def.FT_PER_SQUARE;
+		sq_row = xx/Def.FT_PER_SQUARE;
+		sq_col = yy/Def.FT_PER_SQUARE;
 		
 		log.write(sq_row + "x" + sq_col+"\r\n");
 		
@@ -175,6 +213,23 @@ class full_grid extends JPanel{
 	}
 	
 	public void update_square(int xx, int yy){grid.get(xx).get(yy).revalidate();grid.get(xx).get(yy).repaint();}
+	
+	public void resize(){
+		int xx = jf.getHeight();
+		int yy = jf.getWidth();
+		
+		if(xx/sq_row != sqsi){
+			sqsi = xx/sq_row;
+			
+			for(int ii = 0; ii < sq_row; ii++){
+				for(int jj = 0; jj < sq_col; jj++){
+					grid.get(ii).get(jj).updateSize(sqsi);
+					grid.get(ii).get(jj).revalidate();
+					grid.get(ii).get(jj).repaint();
+				}
+			}
+		}
+	}
 }
 
 class internal_grid extends JPanel{
@@ -211,11 +266,11 @@ class internal_grid extends JPanel{
 
 class square extends JComponent{
 	private int sqsi, xx, yy;
-	private Map ss;
+	private ProtoMap ss;
 	private ArrayList<ArrayList<Integer>> inter;
 	private int type;
 	
-	public square(int square_size, Map mmap, int x_coord, int y_coord){
+	public square(int square_size, ProtoMap mmap, int x_coord, int y_coord){
 		ss = mmap;
 		sqsi = square_size;
 		xx = x_coord;
@@ -232,6 +287,8 @@ class square extends JComponent{
 		setBounds(0, 0, sqsi, sqsi);
 		type = 1;
 	}
+	
+	public void updateSize(int new_square){ sqsi = new_square; setBounds(0, 0, sqsi, sqsi);}
 
 	@Override public void paintComponent(Graphics g){
 		super.paintComponent(g);
