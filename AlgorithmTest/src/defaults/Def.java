@@ -56,6 +56,18 @@ public class Def {
 		
 	/** End Sensor Map Defines **/
 		
+	/** Sensor Defines **/
+		public static final double SONAR_SENSOR_CUTOFF = 5.00;
+		public static final double SONAR_SENSOR_MAX_DISTANCE = 8.00;
+		public static final double SONAR_SENSOR_MIN_DISTANCE = 0.50;
+		public static final double SONAR_SENSOR_RANGING_DELAY = 200; //200us
+		
+		public static final double LASER_SENSOR_CUTOFF = 40.00;
+		public static final double LASER_SENSOR_MAX_DISTANCE = 41.00;
+		public static final double LASER_SENSOR_MIN_DISTANCE = 0.50;
+		public static final double LASER_SENSOR_RANGING_DELAY = 200; //200 us
+	/** End Sensor Defines **/
+		
 	/** GUI Defines **/
 		public static final String LOG_FILE_PATH = "log.txt";
 		public static final int FRAME_SIZE_X = 450;

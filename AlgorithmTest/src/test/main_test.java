@@ -8,12 +8,14 @@ import defaults.Def;
 import map.Map;
 import map.SensorMap;
 import quadcopter.Quadcopter;
+import sensor.Sensor;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Date;
 
 
@@ -44,6 +46,7 @@ public class main_test {
 			Map new_map = new Map(bw);
 			SensorMap sensor_map = new SensorMap();
 			GUI gg = new GUI(bw, new_map, sensor_map);
+			
 			//new_map.attachGUI(gg);
 			//new_map.generate(Def.SEED);
 			//new_map.printMap("sample_map_2.txt");
@@ -88,6 +91,14 @@ public class main_test {
 		}		
 		
 		System.out.println("Application Exit");
+	}
+	
+	public ArrayList<Sensor> createSensors(int arrangement){
+		ArrayList<Sensor> list = new ArrayList<Sensor>();
+		if(arrangement == 1){
+			/** assuming 8 UV sensors , 2 on each side about 6 inches from the center on each side and one laser rangefinder in the front. **/
+		}
+		return list;
 	}
 	
 }

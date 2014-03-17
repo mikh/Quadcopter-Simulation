@@ -4,6 +4,9 @@ public class Sensor {
 	public int ID;
 	public String type;
 	public double cutoff;
+	public double max_distance;
+	public double min_distance;
+	public double rangingDelay;
 	
 	public double angle;		//angle of alignment on quadcopter, as measured in the polar coordinate system
 	public double position;		//position from center of side, can be + or -. Used if multiple sensors have the same angle
