@@ -44,7 +44,7 @@ public class main_test {
 			Map new_map = new Map(bw);
 			SensorMap sensor_map = new SensorMap();
 			GUI gg = new GUI(bw, new_map, sensor_map);
-			new_map.attachGUI(gg);
+			//new_map.attachGUI(gg);
 			//new_map.generate(Def.SEED);
 			//new_map.printMap("sample_map_2.txt");
 			new_map.load_map(Def.SAMPLE_MAP_2);

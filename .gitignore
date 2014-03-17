@@ -1,3 +1,7 @@
+.metadata\*
+indexNamesMap.txt
+.gitignore
+*.tmp
 *.class
 
 # Package Files #

@@ -88,7 +88,7 @@ public class Quadcopter {
 			System.exit(-1);
 		}
 		
-		gui.addInternalMap(internal_map);
+//		gui.addInternalMap(internal_map);
 	}
 	
 	public void set_start_position(int xx, int yy){
@@ -126,7 +126,7 @@ public class Quadcopter {
 					
 					Point internal_locus = Def.SENSOR_SCAN(new Point(centerpoint_xx, centerpoint_yy), jj, ii);
 					internal_map.get(internal_locus.x).set(internal_locus.y,type);
-					gui.update_i_square(internal_locus.x, internal_locus.y);
+			//		gui.update_i_square(internal_locus.x, internal_locus.y);
 				}
 			}
 		}

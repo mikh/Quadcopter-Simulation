@@ -13,6 +13,7 @@ import java.util.Random;
 
 import defaults.Def;
 import gui.GUI;
+import gui.full_grid;
 
 /**
  * Class that defines the map and is used to maintain both the gui elements, and the quadcopter vision
@@ -34,7 +35,7 @@ public class Map extends ProtoMap{
 	//maintains a numeric code 2d array
 	private ArrayList<ArrayList<Integer>> grid;
 	private BufferedWriter log;		//logging 
-	private GUI gui;	//used to call update functions
+	private full_grid gui;	//used to call update functions
 	
 	
 	/**
@@ -1106,7 +1107,7 @@ public class Map extends ProtoMap{
 	 * Attaches GUI object to Map object
 	 * @param gui
 	 */
-	public void attachGUI(GUI gui){ this.gui = gui;}
+	public void attachGUI(full_grid gui){ this.gui = gui;}
 }
 
 /**

@@ -50,8 +50,8 @@ public class Def {
 	
 		
 	/** Sensor Map Defines **/
-		public static final int SENSOR_MAP_SIZE_X = 45;
-		public static final int SENSOR_MAP_SIZE_Y = 45;
+		public static final int SENSOR_MAP_SIZE_X = 90;
+		public static final int SENSOR_MAP_SIZE_Y = 90;
 		public static final Point SENSOR_MAP_QUADCOPTER_POSITION = new Point(22, 22);
 		
 	/** End Sensor Map Defines **/
@@ -77,6 +77,7 @@ public class Def {
 		public static final int FRAME_SENSOR_SIZE_Y = 300;
 		public static final int FRAME_SENSOR_POSITION_X = 550;
 		public static final int FRAME_SENSOR_POSITION_Y = 50;
+		
 		
 		public static final int FRAME_STATS_SIZE_X = 300;
 		public static final int FRAME_STATS_SIZE_Y = 400;
