@@ -199,5 +199,14 @@ public class Def {
 		System.out.println(" ");
 	}
 	
+	public static Point convertDistanceToGridPosition(Point start, double distance, double angle, double ft_per_square){
+		int direction_x = 1, direction_y = 1;
+		if(angle > 90 && angle < 270)
+			direction_x = -1;
+		if(angle > 0 && angle < 180)
+			direction_y = -1;
+		return new Point(start.x + (int)(direction_x*distance*Math.abs(Math.cos(angle/360.0*2*Math.PI))/ft_per_square), start.y + (int)(direction_y*distance*Math.abs(Math.sin(angle/360.0*2*Math.PI))/ft_per_square));
+	}
+	
 	
 }

@@ -37,6 +37,9 @@ public class Map extends ProtoMap{
 	private BufferedWriter log;		//logging 
 	private full_grid gui;	//used to call update functions
 	
+	private Point quadcopter_position = new Point(-1, -1);
+	private double quadcopter_direction;
+	
 	
 	/**
 	 * Map constructor
@@ -68,6 +71,14 @@ public class Map extends ProtoMap{
 		//initialize grid to 0
 		resize(sq_row, sq_col, 0);
 	}
+	
+	public void setQuadcopterPositionAndDirection(Point position, double direction){
+		quadcopter_direction = direction;
+		update(position.x, position.y, Def.QUADCOPTER_CODE);
+	}
+	
+	public Point getQuadcopterPosition(){return quadcopter_position;}
+	public double getQuadcopterDirection(){return quadcopter_direction;}
 	
 	public void resize(int sq_row, int sq_col, int val){
 		for(int ii = 0; ii < sq_row; ii++){
@@ -1034,6 +1045,11 @@ public class Map extends ProtoMap{
 			return -1;
 	*/
 		else{
+			if(type == Def.QUADCOPTER_CODE){
+				if(quadcopter_position.x != -1)
+					update(quadcopter_position.x, quadcopter_position.y, Def.SENSED_AND_SEARCHED_AREA_CODE);
+				quadcopter_position = new Point(xx, yy);
+			}
 			grid.get(xx).set(yy, type);
 			gui.update_square(xx, yy);
 			return 0;

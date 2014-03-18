@@ -14,8 +14,6 @@ public class Sensor {
 	public double reading;
 	public double distance;
 	
-	private boolean simulation;
-	private SensorSimulator SenSim;
 	private SensorInterface SenInt;
 	
 	public Sensor(int ID, String type){
@@ -33,11 +31,6 @@ public class Sensor {
 		simulation = false;
 	}
 	
-	public void simulate(SensorSimulator SenSim){
-		simulation = true;
-		this.SenSim = SenSim;
-	}
-	
 	public void setInterface(SensorInterface SenInt){
 		this.SenInt = SenInt;
 		simulation = false;
@@ -51,5 +44,27 @@ public class Sensor {
 		if(distance > cutoff)
 			distance = -1;
 	}
+	
+	/***** SIMULATION *****/
+		private boolean simulation;
+		private SensorSimulator SenSim;
+		
+		public void simulate(SensorSimulator SenSim){
+			simulation = true;
+			this.SenSim = SenSim;
+		}
+	
+		public SensorSimulator fake_sensor(){
+			SensorSimulator sensim = new SensorSimulator();
+			sensim.ID = ID;
+			sensim.type = type;
+			sensim.angle = angle;
+			sensim.position = position;
+			sensim.max_range = max_distance;
+			simulate(sensim);
+			return sensim;
+		}
+	/***** END SIMULATION *****/
+	
 	
 }

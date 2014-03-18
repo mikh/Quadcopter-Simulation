@@ -1,11 +1,12 @@
-Starting Test at Mon Mar 17 15:05:20 EDT 2014
+Starting Test at Tue Mar 18 13:32:20 EDT 2014
 
 Test Initialization Phase
-Started creating gui at 0ms
-Finished creating gui at 2ms. Time elapsed: 0ms
-Started creating map at 2ms
+Started creating map and GUI at 0ms
+Declaring Map...
 Map construction initiated
 Found square size in pixels. x = 100px y = 100px
+Declaring Sensor Map...
+Creating GUI...
 Creating Frame.
 Obtaining number of squares...	100x100
 Obtaining pixels per square...	4x4
@@ -15,5 +16,7 @@ Map pixel size is not compatible with number of squares. Changing Map size to 40
 
 Map pixel size is not compatible with number of squares. Changing Map size to 405. Note that this may cause further problems in the graphics.
 9x9
+Loading map...
 Loading map sample map...
-Finished creating map at 5725ms. Time elapsed: 5723ms
+Creating sensors...
+Finished creating map and GUI at 5546ms. Time elapsed: 5545ms

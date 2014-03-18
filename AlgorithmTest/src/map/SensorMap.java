@@ -1,34 +1,90 @@
 package map;
 
+import java.awt.Point;
 import java.util.ArrayList;
+
+import sensor.Sensor;
 import defaults.Def;
 import gui.full_grid;
 
 public class SensorMap extends ProtoMap{
 	private ArrayList<ArrayList<Integer>> grid;
 	private full_grid gui;
+	private ArrayList<Sensor> sensor_list;
+	private double direction;
 	
 	/***** INIT ****/
 		public SensorMap(){
 			grid = new ArrayList<ArrayList<Integer>>();
-			for(int ii = 0; ii < Def.SENSOR_MAP_SIZE_X; ii++){
+			for(int ii = 0; ii < Def.SENSOR_MAP_SIZE_X/Def.FT_PER_SQUARE; ii++){
 				ArrayList<Integer> row = new ArrayList<Integer>();
-				for(int jj = 0; jj < Def.SENSOR_MAP_SIZE_Y; jj++)
+				for(int jj = 0; jj < Def.SENSOR_MAP_SIZE_Y/Def.FT_PER_SQUARE; jj++)
 					row.add(Def.UNASSIGNED_CODE);
 				grid.add(row);
 			}
 			grid.get(Def.SENSOR_MAP_QUADCOPTER_POSITION.x).set(Def.SENSOR_MAP_QUADCOPTER_POSITION.y,Def.QUADCOPTER_CODE);
 		}
+		
+		public void addSensors(ArrayList<Sensor> list){
+			sensor_list = list;
+		}
 	/***** END INIT *****/
+		
+	public void setDirection(double direction){ this.direction = direction; }
+		
+	public void performRanging(){
+		clear();
+		//TODO: need ranging protocol based on actual sensor needs.
+		
+		//naive ranging method
+		for(int ii = 0; ii < sensor_list.size(); ii++){
+			sensor_list.get(ii).performRanging();
+			double distance = sensor_list.get(ii).distance;
+			double angle = sensor_list.get(ii).angle + direction;
+			if(distance != -1){				
+				Point new_location = Def.convertDistanceToGridPosition(new Point(22,22), distance, angle, Def.FT_PER_SQUARE);
+				fillSquares(new Point(22,22), new_location, distance, angle);
+				update(new_location.x, new_location.y, Def.WALL_CODE);
+			} else{
+				Point end = Def.convertDistanceToGridPosition(new Point(22,22), sensor_list.get(ii).cutoff, angle, Def.FT_PER_SQUARE);
+				fillSquares(new Point(22,22), end, sensor_list.get(ii).cutoff, angle);
+				update(end.x, end.y, Def.MOVABLE_AREA_CODE);
+			}
+		}
+		
+		update(Def.SENSOR_MAP_QUADCOPTER_POSITION.x, Def.SENSOR_MAP_QUADCOPTER_POSITION.y, Def.QUADCOPTER_CODE);
+	}
+	
+	public void fillSquares(Point start, Point end, double distance, double angle){
+		ArrayList<Point> points_seen = new ArrayList<Point>();
+		
+		double dd = 0;
+		while(dd < distance){
+			Point new_location = Def.convertDistanceToGridPosition(start, dd, angle, Def.FT_PER_SQUARE);
+			if(new_location.equals(end))
+				break;
+			if(!points_seen.contains(new_location)){
+				update(new_location.x, new_location.y, Def.MOVABLE_AREA_CODE);
+				points_seen.add(new_location);
+			}
+			dd++;
+		}
+		
+	}
 	
 	public int get(int xx, int yy){
 		return grid.get(xx).get(yy);
 	}
 	
 	private void clear(){
-		for(int ii = 0; ii < Def.SENSOR_MAP_SIZE_X; ii++){
-			for(int jj = 0; jj < Def.SENSOR_MAP_SIZE_Y; jj++)
-				update(ii,jj, Def.UNASSIGNED_CODE);
+		for(int ii = 0; ii < grid.size(); ii++){
+			for(int jj = 0; jj < grid.get(ii).size(); jj++){
+				try{
+					update(ii,jj, Def.UNASSIGNED_CODE);
+				} catch(Exception e){
+					System.out.println("Error");
+				}
+			}
 		}
 		update(Def.SENSOR_MAP_QUADCOPTER_POSITION.x, Def.SENSOR_MAP_QUADCOPTER_POSITION.y, Def.QUADCOPTER_CODE);
 	}
