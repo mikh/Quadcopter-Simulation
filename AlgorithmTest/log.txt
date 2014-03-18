@@ -1,4 +1,4 @@
-Starting Test at Tue Mar 18 13:32:20 EDT 2014
+Starting Test at Tue Mar 18 14:10:46 EDT 2014
 
 Test Initialization Phase
 Started creating map and GUI at 0ms
@@ -19,4 +19,4 @@ Map pixel size is not compatible with number of squares. Changing Map size to 40
 Loading map...
 Loading map sample map...
 Creating sensors...
-Finished creating map and GUI at 5546ms. Time elapsed: 5545ms
+Finished creating map and GUI at 5186ms. Time elapsed: 5185ms

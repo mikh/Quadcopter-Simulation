@@ -12,6 +12,7 @@ public class SensorMap extends ProtoMap{
 	private full_grid gui;
 	private ArrayList<Sensor> sensor_list;
 	private double direction;
+	private Map map;
 	
 	/***** INIT ****/
 		public SensorMap(){
@@ -49,6 +50,7 @@ public class SensorMap extends ProtoMap{
 				Point end = Def.convertDistanceToGridPosition(new Point(22,22), sensor_list.get(ii).cutoff, angle, Def.FT_PER_SQUARE);
 				fillSquares(new Point(22,22), end, sensor_list.get(ii).cutoff, angle);
 				update(end.x, end.y, Def.MOVABLE_AREA_CODE);
+				updateMainMap(end.x, end.y);
 			}
 		}
 		
@@ -65,6 +67,7 @@ public class SensorMap extends ProtoMap{
 				break;
 			if(!points_seen.contains(new_location)){
 				update(new_location.x, new_location.y, Def.MOVABLE_AREA_CODE);
+				updateMainMap(new_location.x, new_location.y);
 				points_seen.add(new_location);
 			}
 			dd++;
@@ -96,5 +99,13 @@ public class SensorMap extends ProtoMap{
 		}
 		
 		public void attachGUI(full_grid gui){this.gui = gui;}
+		
+		public void importMap(Map map){ this.map = map; }
+		
+		private void updateMainMap(int xx, int yy){
+			Point t = map.getQuadcopterPosition();
+			if(map.get(t.x + xx - Def.SENSOR_MAP_QUADCOPTER_POSITION.x, t.y + yy - Def.SENSOR_MAP_QUADCOPTER_POSITION.y) == Def.MOVABLE_AREA_CODE)
+				map.update(t.x + xx - Def.SENSOR_MAP_QUADCOPTER_POSITION.x, t.y + yy - Def.SENSOR_MAP_QUADCOPTER_POSITION.y, Def.SENSED_AREA_CODE);
+		}
 	/***** END GUI CODE *****/
 }

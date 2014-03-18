@@ -57,7 +57,7 @@ public class Def {
 	/** End Sensor Map Defines **/
 		
 	/** Sensor Defines **/
-		public static final double SONAR_SENSOR_CUTOFF = 5.00;
+		public static final double SONAR_SENSOR_CUTOFF = 6.01;
 		public static final double SONAR_SENSOR_MAX_DISTANCE = 8.00;
 		public static final double SONAR_SENSOR_MIN_DISTANCE = 0.50;
 		public static final double SONAR_SENSOR_RANGING_DELAY = 200; //200us

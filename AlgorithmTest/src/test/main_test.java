@@ -55,8 +55,9 @@ public class main_test {
 			ArrayList<Sensor> sensor_list = createSensors(1);
 			ArrayList<SensorSimulator> sensor_simulator_list = createSimulationSensors(sensor_list, new_map);
 			sensor_map.addSensors(sensor_list);
-			new_map.setQuadcopterPositionAndDirection(new Point(42, 42), 45);
-			sensor_map.setDirection(45);
+			sensor_map.importMap(new_map);
+			new_map.setQuadcopterPositionAndDirection(new Point(42, 42), 90);
+			sensor_map.setDirection(90);
 			sensor_map.performRanging();
 			Def.output(bw, String.format("Finished creating map and GUI at %dms. Time elapsed: %dms\r\n", System.currentTimeMillis() - time_start, System.currentTimeMillis() - time_elapsed));
 			
