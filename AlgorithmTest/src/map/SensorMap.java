@@ -32,6 +32,7 @@ public class SensorMap extends ProtoMap{
 	/***** END INIT *****/
 		
 	public void setDirection(double direction){ this.direction = direction; }
+	public ArrayList<ArrayList<Integer>> getMap(){ return grid; }
 		
 	public void performRanging(){
 		clear();

@@ -45,6 +45,23 @@ public class DynamicMap extends ProtoMap
 			if(quadcopter_position.y - (Def.SENSOR_MAP_QUADCOPTER_POSITION.y + 1) < 0) y_minus = -1*(quadcopter_position.y - (Def.SENSOR_MAP_QUADCOPTER_POSITION.y + 1));
 			resize(x_plus, x_minus, y_plus, y_minus);
 			
+			Point offset = quadcopter_position;
+			offset.x -= Def.SENSOR_MAP_QUADCOPTER_POSITION.x;
+			offset.y -= Def.SENSOR_MAP_QUADCOPTER_POSITION.y;
+			
+			for(int ii = 0; ii < map.size(); ii++){
+				for(int jj = 0; jj < map.get(ii).size(); jj++){
+					if(map.get(ii).get(jj) != Def.UNASSIGNED_CODE){
+						if(map.get(ii).get(jj) == Def.MOVABLE_AREA_CODE){
+							int type = grid.get(ii + offset.x).get(jj + offset.y);
+							if(type == Def.WALL_CODE || type == Def.UNASSIGNED_CODE)
+								update(ii+offset.x, jj+offset.y, Def.MOVABLE_AREA_CODE);
+						} else{
+							update(ii + offset.x, jj + offset.y, map.get(ii).get(jj));
+						}
+					}
+				}
+			}
 		}
 		
 		public void resize(int x_plus, int x_minus, int y_plus, int y_minus){
@@ -110,6 +127,10 @@ public class DynamicMap extends ProtoMap
 				}
 				quadcopter_position.y += y_minus;
 				grid = new_grid;
+			}
+			if(x_plus != 0 || x_minus != 0 || y_plus != 0 || y_minus != 0){
+				this.getGridDimensions();
+				gui.recreate(grid_x*Def.FT_PER_SQUARE, grid_y*Def.FT_PER_SQUARE);
 			}
 		}
 	/***** END MAP CONSTRUCTION *****/
