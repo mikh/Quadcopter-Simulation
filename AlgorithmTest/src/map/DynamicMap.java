@@ -45,7 +45,7 @@ public class DynamicMap extends ProtoMap
 			if(quadcopter_position.y - (Def.SENSOR_MAP_QUADCOPTER_POSITION.y + 1) < 0) y_minus = -1*(quadcopter_position.y - (Def.SENSOR_MAP_QUADCOPTER_POSITION.y + 1));
 			resize(x_plus, x_minus, y_plus, y_minus);
 			
-			Point offset = quadcopter_position;
+			Point offset = new Point(quadcopter_position.x, quadcopter_position.y);
 			offset.x -= Def.SENSOR_MAP_QUADCOPTER_POSITION.x;
 			offset.y -= Def.SENSOR_MAP_QUADCOPTER_POSITION.y;
 			
@@ -131,6 +131,36 @@ public class DynamicMap extends ProtoMap
 			if(x_plus != 0 || x_minus != 0 || y_plus != 0 || y_minus != 0){
 				this.getGridDimensions();
 				gui.recreate(grid_x*Def.FT_PER_SQUARE, grid_y*Def.FT_PER_SQUARE);
+			}
+		}
+	
+		public void move(int direction, int distance){
+			getGridDimensions();
+			Point curPos = new Point(quadcopter_position.x, quadcopter_position.y);
+			if(direction == Def.UP){
+				curPos.x -= distance;
+			} else if(direction == Def.DOWN)
+				curPos.x += distance;
+			else if(direction == Def.RIGHT)
+				curPos.y += distance;
+			else if(direction == Def.LEFT)
+				curPos.y -= distance;
+			
+			boolean fail = false;
+			if(curPos.x < 0 || curPos.x > grid_x)
+				fail = true;
+			else if(curPos.y < 0 || curPos.y > grid_y)
+				fail = true;
+			else if(grid.get(curPos.x).get(curPos.y) == Def.WALL_CODE)
+				fail = true;
+			
+			if(fail){
+				System.out.println("YOU CRASHED!");
+			}
+			else{
+				update(quadcopter_position.x, quadcopter_position.y, Def.QUADCOPTER_CODE);
+				quadcopter_position = curPos;
+				update(curPos.x, curPos.y, Def.QUADCOPTER_CODE);
 			}
 		}
 	/***** END MAP CONSTRUCTION *****/

@@ -59,13 +59,14 @@ public class main_test {
 			ArrayList<SensorSimulator> sensor_simulator_list = createSimulationSensors(sensor_list, new_map);
 			sensor_map.addSensors(sensor_list);
 			sensor_map.importMap(new_map);
-			for(int ii = 0; ii < 360; ii += 45){
+			for(int ii = 0; ii < 360; ii += 15){
 				new_map.setQuadcopterPositionAndDirection(new Point(42, 42), ii);
 				sensor_map.setDirection(ii);
 				sensor_map.performRanging();
 				dynamic_map.insertSensorMap(sensor_map.getMap());
-				Def.delay(10000);
+				Def.delay(1000);
 			}
+			dynamic_map.move(Def.DOWN, 3);
 			Def.output(bw, String.format("Finished creating map and GUI at %dms. Time elapsed: %dms\r\n", System.currentTimeMillis() - time_start, System.currentTimeMillis() - time_elapsed));
 			
 			
