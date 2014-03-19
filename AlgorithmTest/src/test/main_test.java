@@ -5,6 +5,7 @@ package test;
 
 import gui.GUI;
 import defaults.Def;
+import map.DynamicMap;
 import map.Map;
 import map.SensorMap;
 import quadcopter.Quadcopter;
@@ -43,8 +44,10 @@ public class main_test {
 			Map new_map = new Map(bw);
 			Def.output(bw, "Declaring Sensor Map...\r\n");
 			SensorMap sensor_map = new SensorMap();
+			Def.output(bw, "Declaring Dynamic Map...\r\n");
+			DynamicMap dynamic_map = new DynamicMap();
 			Def.output(bw, "Creating GUI...\r\n");
-			GUI gg = new GUI(bw, new_map, sensor_map);
+			GUI gg = new GUI(bw, new_map, sensor_map, dynamic_map);
 			
 			//new_map.generate(Def.SEED);
 			//new_map.printMap("sample_map_2.txt");

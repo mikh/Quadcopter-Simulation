@@ -18,11 +18,11 @@ public class GUI {
 	
 	private JFrame frame_map, frame_dynamic, frame_sensor, frame_stats;
 	private BufferedWriter log;
-	private full_grid grid, grid_sensor;
+	private full_grid grid, grid_sensor, grid_dynamic;
 	
 	
 	@SuppressWarnings("unused")
-	public GUI(BufferedWriter log_file, ProtoMap mmap, ProtoMap sensor_map) throws IOException{
+	public GUI(BufferedWriter log_file, ProtoMap mmap, ProtoMap sensor_map, ProtoMap dynamic_map) throws IOException{
 		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");	//prevent a exception due to a JDK bug
 		
 		/* Crash Exception Testing */
@@ -108,6 +108,19 @@ public class GUI {
 			@Override public void componentShown(ComponentEvent arg0) {}
 		});
 
+		grid_dynamic = new full_grid(log, dynamic_map, frame_dynamic, Def.DYNAMIC_MAP_INITIAL_SIZE_X*Def.FT_PER_SQUARE, Def.DYNAMIC_MAP_INITIAL_SIZE_Y*Def.FT_PER_SQUARE);
+		frame_dynamic.add(grid_dynamic);
+		frame_dynamic.addComponentListener(new ComponentListener(){
+			@Override
+			public void componentResized(ComponentEvent evt){
+				grid_dynamic.resize();
+			}
+
+			@Override public void componentHidden(ComponentEvent arg0) {}
+			@Override public void componentMoved(ComponentEvent arg0) {}
+			@Override public void componentShown(ComponentEvent arg0) {}
+		});
+			
 		frame_map.setVisible(true);
 		frame_dynamic.setVisible(true);
 		frame_sensor.setVisible(true);

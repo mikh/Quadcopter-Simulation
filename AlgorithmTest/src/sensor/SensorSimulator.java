@@ -30,7 +30,8 @@ public class SensorSimulator {
 		list_positions.add(q_pos);
 		while(dd < max_range){
 			Point n_pos = Def.convertDistanceToGridPosition(q_pos, dd, aa, Def.FT_PER_SQUARE);
-			if(!list_positions.contains(n_pos)){
+			Point size = map.getSizeOfGrid();
+			if(n_pos.x < size.x && n_pos.y < size.y && n_pos.x > 0 && n_pos.y > 0 && !list_positions.contains(n_pos)){
 				int type = map.get(n_pos.x, n_pos.y);
 				if(type == Def.WALL_CODE)
 					break;

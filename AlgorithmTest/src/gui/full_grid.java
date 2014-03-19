@@ -18,11 +18,13 @@ public class full_grid extends JPanel{
 	ArrayList<ArrayList<square>> grid;
 	private JFrame jf;
 	private int sq_row, sq_col;
+	private ProtoMap map;
 	
 	@SuppressWarnings("unused")
 	public full_grid(BufferedWriter log_file, ProtoMap mmap, JFrame frame, int ft_x, int ft_y) throws IOException{
 		log = log_file;
 		jf = frame;
+		map = mmap;
 		
 		log.write("Obtaining number of squares...\t");
 		int xx = ft_x, yy = ft_y;
@@ -79,6 +81,24 @@ public class full_grid extends JPanel{
 	}
 	
 	public void update_square(int xx, int yy){grid.get(xx).get(yy).revalidate();grid.get(xx).get(yy).repaint();}
+	
+	public void recreate(int ft_x, int ft_y){
+		sq_row = ft_x/Def.FT_PER_SQUARE;
+		sq_col = ft_y/Def.FT_PER_SQUARE;
+		grid = new ArrayList<ArrayList<square>>();
+		
+		
+		for(int ii = 0; ii < sq_row; ii++){
+			grid.add(new ArrayList<square>());
+			for(int jj = 0; jj < sq_col; jj++){
+				square sq = new square(sqsi, map, ii, jj);
+				add(sq);
+				grid.get(ii).add(sq);
+			}
+		}
+		
+		resize();
+	}
 	
 	public void resize(){
 		int xx = jf.getHeight();

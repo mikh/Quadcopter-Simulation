@@ -53,8 +53,12 @@ public class Def {
 		public static final int SENSOR_MAP_SIZE_X = 90;
 		public static final int SENSOR_MAP_SIZE_Y = 90;
 		public static final Point SENSOR_MAP_QUADCOPTER_POSITION = new Point(22, 22);
-		
 	/** End Sensor Map Defines **/
+		
+	/** Dynamic Map Defines **/
+		public static final int DYNAMIC_MAP_INITIAL_SIZE_X = 50;
+		public static final int DYNAMIC_MAP_INITIAL_SIZE_Y = 50;
+	/** End Dynamic Map Defines **/
 		
 	/** Sensor Defines **/
 		public static final double SONAR_SENSOR_CUTOFF = 6.01;

@@ -44,13 +44,17 @@ public class SensorMap extends ProtoMap{
 			double angle = sensor_list.get(ii).angle + direction;
 			if(distance != -1){				
 				Point new_location = Def.convertDistanceToGridPosition(new Point(22,22), distance, angle, Def.FT_PER_SQUARE);
-				fillSquares(new Point(22,22), new_location, distance, angle);
-				update(new_location.x, new_location.y, Def.WALL_CODE);
+				if(new_location.x > 0 && new_location.y > 0 && new_location.x < grid.size() && new_location.y < grid.get(0).size()){
+					fillSquares(new Point(22,22), new_location, distance, angle);
+					update(new_location.x, new_location.y, Def.WALL_CODE);
+				}
 			} else{
 				Point end = Def.convertDistanceToGridPosition(new Point(22,22), sensor_list.get(ii).cutoff, angle, Def.FT_PER_SQUARE);
-				fillSquares(new Point(22,22), end, sensor_list.get(ii).cutoff, angle);
-				update(end.x, end.y, Def.MOVABLE_AREA_CODE);
-				updateMainMap(end.x, end.y);
+				if(end.x > 0 && end.y > 0 && end.x < grid.size() && end.y < grid.get(0).size()){
+					fillSquares(new Point(22,22), end, sensor_list.get(ii).cutoff, angle);
+					update(end.x, end.y, Def.MOVABLE_AREA_CODE);
+					updateMainMap(end.x, end.y);
+				}
 			}
 		}
 		

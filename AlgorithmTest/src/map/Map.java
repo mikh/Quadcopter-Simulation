@@ -79,6 +79,7 @@ public class Map extends ProtoMap{
 	
 	public Point getQuadcopterPosition(){return quadcopter_position;}
 	public double getQuadcopterDirection(){return quadcopter_direction;}
+	public Point getSizeOfGrid(){ return new Point(grid.size(), grid.get(0).size()); }
 	
 	public void resize(int sq_row, int sq_col, int val){
 		for(int ii = 0; ii < sq_row; ii++){
