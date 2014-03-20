@@ -158,7 +158,7 @@ public class DynamicMap extends ProtoMap
 				System.out.println("YOU CRASHED!");
 			}
 			else{
-				update(quadcopter_position.x, quadcopter_position.y, Def.QUADCOPTER_CODE);
+				update(quadcopter_position.x, quadcopter_position.y, Def.SENSED_AND_SEARCHED_AREA_CODE);
 				quadcopter_position = curPos;
 				update(curPos.x, curPos.y, Def.QUADCOPTER_CODE);
 			}

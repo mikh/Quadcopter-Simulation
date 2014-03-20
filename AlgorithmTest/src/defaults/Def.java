@@ -204,6 +204,7 @@ public class Def {
 	}
 	
 	public static Point convertDistanceToGridPosition(Point start, double distance, double angle, double ft_per_square){
+		if(angle > 360) angle -= 360;
 		int direction_x = 1, direction_y = 1;
 		if(angle > 90 && angle < 270)
 			direction_x = -1;

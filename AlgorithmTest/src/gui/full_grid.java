@@ -96,7 +96,10 @@ public class full_grid extends JPanel{
 				grid.get(ii).add(sq);
 			}
 		}
-		
+		jf.removeAll();
+		jf.add(this);
+		jf.revalidate();
+		jf.repaint();
 		resize();
 	}
 	
