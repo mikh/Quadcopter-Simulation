@@ -1,0 +1,10 @@
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Queue;
+import java.tools.String;
+
+public class Pilot{
+  private:
+    Queue<String> messageQueue = new Queue(); 
+  
+}
