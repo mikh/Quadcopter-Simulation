@@ -85,6 +85,11 @@ public class full_grid extends JPanel{
 	public void recreate(int ft_x, int ft_y){
 		sq_row = ft_x/Def.FT_PER_SQUARE;
 		sq_col = ft_y/Def.FT_PER_SQUARE;
+		int xx = jf.getHeight();
+		
+		if(xx/sq_row != sqsi)
+			sqsi = xx/sq_row;
+		setLayout(new GridLayout(sq_row, sq_col));	
 		grid = new ArrayList<ArrayList<square>>();
 		
 		

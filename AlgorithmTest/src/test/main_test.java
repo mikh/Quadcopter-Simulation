@@ -59,15 +59,18 @@ public class main_test {
 			ArrayList<SensorSimulator> sensor_simulator_list = createSimulationSensors(sensor_list, new_map);
 			sensor_map.addSensors(sensor_list);
 			sensor_map.importMap(new_map);
+			Point n = new Point(42, 42);
 			for(int jj = 0; jj < 2; jj++){
 				for(int ii = 0; ii < 360; ii += 15){
-					new_map.setQuadcopterPositionAndDirection(new Point(42, 42), ii);
+					new_map.setQuadcopterPositionAndDirection(n, ii);
 					sensor_map.setDirection(ii);
 					sensor_map.performRanging();
 					dynamic_map.insertSensorMap(sensor_map.getMap());
 					Def.delay(1000);
 				}
-				dynamic_map.move(Def.DOWN, 3);
+				Point rr = dynamic_map.move(Def.DOWN, 3);
+				n.x += rr.x;
+				n.y += rr.y;
 			}
 			Def.output(bw, String.format("Finished creating map and GUI at %dms. Time elapsed: %dms\r\n", System.currentTimeMillis() - time_start, System.currentTimeMillis() - time_elapsed));
 			

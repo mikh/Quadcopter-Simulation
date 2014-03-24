@@ -134,8 +134,9 @@ public class DynamicMap extends ProtoMap
 			}
 		}
 	
-		public void move(int direction, int distance){
+		public Point move(int direction, int distance){
 			getGridDimensions();
+			Point savePos = new Point(quadcopter_position.x, quadcopter_position.y);
 			Point curPos = new Point(quadcopter_position.x, quadcopter_position.y);
 			if(direction == Def.UP){
 				curPos.x -= distance;
@@ -162,6 +163,7 @@ public class DynamicMap extends ProtoMap
 				quadcopter_position = curPos;
 				update(curPos.x, curPos.y, Def.QUADCOPTER_CODE);
 			}
+			return new Point(Math.abs(savePos.x - curPos.x), Math.abs(savePos.y - curPos.y));
 		}
 	/***** END MAP CONSTRUCTION *****/
 		
