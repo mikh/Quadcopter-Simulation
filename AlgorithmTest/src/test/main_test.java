@@ -60,7 +60,7 @@ public class main_test {
 			sensor_map.addSensors(sensor_list);
 			sensor_map.importMap(new_map);
 			Point n = new Point(42, 42);
-			for(int jj = 0; jj < 2; jj++){
+			for(int jj = 0; jj < 5; jj++){
 				for(int ii = 0; ii < 360; ii += 15){
 					new_map.setQuadcopterPositionAndDirection(n, ii);
 					sensor_map.setDirection(ii);

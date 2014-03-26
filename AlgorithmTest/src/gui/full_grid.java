@@ -83,12 +83,15 @@ public class full_grid extends JPanel{
 	public void update_square(int xx, int yy){grid.get(xx).get(yy).revalidate();grid.get(xx).get(yy).repaint();}
 	
 	public void recreate(int ft_x, int ft_y){
+		removeAll();
 		sq_row = ft_x/Def.FT_PER_SQUARE;
 		sq_col = ft_y/Def.FT_PER_SQUARE;
 		int xx = jf.getHeight();
 		
-		if(xx/sq_row != sqsi)
-			sqsi = xx/sq_row;
+		int max = Def.max(sq_row, sq_col);
+		
+		if(xx/max != sqsi)
+			sqsi = xx/max;
 		setLayout(new GridLayout(sq_row, sq_col));	
 		grid = new ArrayList<ArrayList<square>>();
 		
@@ -101,8 +104,8 @@ public class full_grid extends JPanel{
 				grid.get(ii).add(sq);
 			}
 		}
-		jf.removeAll();
-		jf.add(this);
+	//	jf.removeAll();
+	//	jf.add(this);
 		jf.revalidate();
 		jf.repaint();
 		resize();
@@ -110,9 +113,9 @@ public class full_grid extends JPanel{
 	
 	public void resize(){
 		int xx = jf.getHeight();
-		
-		if(xx/sq_row != sqsi){
-			sqsi = xx/sq_row;
+		int max = Def.max(sq_row, sq_col);
+		if(xx/max != sqsi){
+			sqsi = xx/max;
 			
 			for(int ii = 0; ii < sq_row; ii++){
 				for(int jj = 0; jj < sq_col; jj++){
