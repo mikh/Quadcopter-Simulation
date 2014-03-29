@@ -5,8 +5,7 @@ import java.util.LinkedList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.*;
-import javax.comm.CommPortIdentifier;
+import javax.comm.*;
 
 public class Pilot{
   public Pilot() { }
@@ -146,7 +145,7 @@ public class Pilot{
  public static void main (String[] args) {
   Pilot pilot = new Pilot();
   try {
-  pilot.connect("/dev/ttyUSB0" );
+  pilot.connect("/dev/tty04" );
   } catch (Exception ex) {
     System.out.println("Could not open tty, exiting");
     return;
