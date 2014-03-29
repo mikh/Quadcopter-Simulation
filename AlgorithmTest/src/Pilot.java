@@ -5,12 +5,8 @@ import java.util.LinkedList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-<<<<<<< HEAD
-import javax.comm.*;
-=======
 import java.io.*;
 import gnu.io.*;
->>>>>>> e2a65bac07565c8fe6cecdacb29b17c8dbf67687
 
 public class Pilot{
   public Pilot() { }
@@ -23,7 +19,7 @@ public class Pilot{
   private int battery;
   private int compass;
   
-  private static boolean sendingMessage;
+  private static boolean sendingMessage = false
   
   private boolean sendMessage() {
     System.out.println("Messsage to be sent:");
@@ -144,13 +140,17 @@ public class Pilot{
     public void run() {
       try {
         while(!sendingMessage) {
-         String str = (String.format("s%02d",messageQueue.size()));
+         //String str = (String.format("s%02d",messageQueue.size()));
+         this.out.write(String.format("s%02d",messageQueue.size()).getBytes()); 
+         // TODO check response
          for(int ii = 0; ii <= messageQueue.size(); ii++)
-           str += messageQueue.poll();
+           //str += messageQueue.poll();
+           this.out.write(messageQueue.poll().getBytes());
 
-          this.out.write(str.getBytes());
+          //this.out.write(str.getBytes());
+         sendingMessage = false;
         }
-        sendingMessage = false;
+        
 /*        int c = 0;
         while( ( c = System.in.read() ) &gt; -1 ) {
           this.out.write( c );
@@ -165,14 +165,6 @@ public class Pilot{
  public static void main (String[] args) {
   Pilot pilot = new Pilot();
   try {
-<<<<<<< HEAD
-  pilot.connect("/dev/tty04" );
-  } catch (Exception ex) {
-    System.out.println("Could not open tty, exiting");
-    return;
-  }
-  pilot.setArmed(1);
-=======
     pilot.connect("/dev/ttyO4" );
     } catch (Exception ex) {
           System.out.println(ex.getLocalizedMessage());
@@ -181,8 +173,7 @@ public class Pilot{
       System.out.println("Could not open tty, exiting");
       return;
     }
-/*  pilot.setArmed(1);
->>>>>>> e2a65bac07565c8fe6cecdacb29b17c8dbf67687
+  pilot.setArmed(1);
   pilot.sync();
   
   try {
@@ -198,8 +189,8 @@ public class Pilot{
     Thread.sleep(10000);
   } catch(InterruptedException ex) {
     Thread.currentThread().interrupt();
-  }*/
-  //pilot.powerOff();
+  }
+  pilot.powerOff();
  } 
 }
 
