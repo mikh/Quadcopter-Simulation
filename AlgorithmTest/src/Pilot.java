@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.*;
-import javax.comm.CommPortIdentifier;
+import gnu.io.*;
 
 public class Pilot{
   public Pilot() { }
@@ -66,31 +66,46 @@ public class Pilot{
   
   // CODE FOR UART COMMUNICATION
  void connect( String portName ) throws Exception {
+    System.out.println("Opening connection to " + portName);
+    System.out.println(CommPortIdentifier.getPortIdentifiers());
+    System.out.println("\n\n");
+     CommPortIdentifier.addPortName(portName, CommPortIdentifier.PORT_SERIAL, null);
+     System.out.println("Added port name");
     CommPortIdentifier portIdentifier = CommPortIdentifier
         .getPortIdentifier( portName );
+         System.out.println("Port Identifier created " + portIdentifier.getName() + " " + portIdentifier.toString());
+    if(portIdentifier == null) System.out.println("portIdentifier == null");
     if( portIdentifier.isCurrentlyOwned() ) {
       System.out.println( "Error: Port is currently in use" );
     } else {
       int timeout = 2000;
-      CommPort commPort = portIdentifier.open( this.getClass().getName(), timeout );
+       System.out.println("commPort creating ");
+      SerialPort commPort = (SerialPort) portIdentifier.open( "", timeout);
+      System.out.println("commPort created");
  
       if( commPort instanceof SerialPort ) {
-        SerialPort serialPort = ( SerialPort )commPort;
+        SerialPort serialPort = commPort;
+        System.out.println("serialPort created");
         serialPort.setSerialPortParams( 9600,
                                         SerialPort.DATABITS_8,
                                         SerialPort.STOPBITS_1,
                                         SerialPort.PARITY_NONE );
- 
+        System.out.println("serialPort params defined");
         InputStream in = serialPort.getInputStream();
+        System.out.println("Input stream created");
         OutputStream out = serialPort.getOutputStream();
+        System.out.println("output stream created");
  
         ( new Thread( new SerialReader( in ) ) ).start();
+        System.out.println("input thread started");
         ( new Thread( new SerialWriter( out ) ) ).start();
+         System.out.println("output thread started");
  
       } else {
         System.out.println( "Error: Only serial ports are handled by this example." );
       }
     }
+     System.out.println("Done with connect");
   }
  
   public static class SerialReader implements Runnable {
@@ -146,12 +161,15 @@ public class Pilot{
  public static void main (String[] args) {
   Pilot pilot = new Pilot();
   try {
-  pilot.connect("/dev/ttyUSB0" );
-  } catch (Exception ex) {
-    System.out.println("Could not open tty, exiting");
-    return;
-  }
-  pilot.setArmed(1);
+    pilot.connect("/dev/ttyO4" );
+    } catch (Exception ex) {
+          System.out.println(ex.getLocalizedMessage());
+      System.out.println(ex.toString());
+      ex.printStackTrace();
+      System.out.println("Could not open tty, exiting");
+      return;
+    }
+/*  pilot.setArmed(1);
   pilot.sync();
   
   try {
@@ -165,10 +183,10 @@ public class Pilot{
  
   try {
     Thread.sleep(10000);
-} catch(InterruptedException ex) {
+  } catch(InterruptedException ex) {
     Thread.currentThread().interrupt();
-}
-  pilot.powerOff();
+  }*/
+  //pilot.powerOff();
  } 
 }
 
