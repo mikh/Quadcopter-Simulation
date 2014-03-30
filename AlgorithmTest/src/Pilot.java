@@ -19,17 +19,17 @@ public class Pilot{
   private int battery;
   private int compass;
   
-  private static boolean sendingMessage = false
+  private volatile static boolean sendingMessage = false;
   
   private boolean sendMessage() {
-    System.out.println("Messsage to be sent:");
+  /*  System.out.println("Messsage to be sent:");
     String str = (String.format("s%02d",messageQueue.size()));
     System.out.println(str);
     for(int ii = 0; ii <= messageQueue.size(); ii++)
-      System.out.println(messageQueue.poll());
+      System.out.println(messageQueue.poll());*/
     sendingMessage = true;
-    while(sendingMessage) {System.out.println("SENDING MESSAGE"); }
-    System.out.println("DONE SENDING");
+   // while(sendingMessage) {System.out.println("SENDING MESSAGE"); }
+  //  System.out.println("DONE SENDING");
     return true;
   }
   
@@ -38,11 +38,11 @@ public class Pilot{
     return false;
   }
   
-  public void setPitch(int v){ messageQueue.add(String.format("p%04d",v)); }
-  public void setYaw(int v){ messageQueue.add(String.format("y%04d",v)); }
-  public void setRoll(int v){ messageQueue.add(String.format("r%04d",v)); }
-  public void setThrottle(int v){ messageQueue.add(String.format("t%04d",v)); }
-  public void setArmed(int v){ messageQueue.add(String.format("a%04d",v)); }
+  public void setPitch(int v){ messageQueue.add(String.format("p%04d\n",v)); }
+  public void setYaw(int v){ messageQueue.add(String.format("y%04d\n",v)); }
+  public void setRoll(int v){ messageQueue.add(String.format("r%04d\n",v)); }
+  public void setThrottle(int v){ messageQueue.add(String.format("t%04d\n",v)); }
+  public void setArmed(int v){ messageQueue.add(String.format("a%04d\n",v)); }
   
   public boolean powerOff(){
     messageQueue.add("z0001");
@@ -121,8 +121,8 @@ public class Pilot{
       int len = -1;
       try {
         while( ( len = this.in.read( buffer ) ) > -1 ) {
-          System.out.print( new String( buffer, 0, len ) );
-        }
+        }          System.out.print( new String( buffer, 0, len ) );
+
       } catch( IOException e ) {
         e.printStackTrace();
       }
@@ -139,17 +139,24 @@ public class Pilot{
  
     public void run() {
       try {
-        while(!sendingMessage) {
+      while(true){
+       // System.out.println("THREAD");
+       // this.out.write(String.format("THREAD").getBytes());
+        if(sendingMessage) {
          //String str = (String.format("s%02d",messageQueue.size()));
-         this.out.write(String.format("s%02d",messageQueue.size()).getBytes()); 
+         this.out.write(String.format("s%02d\n",messageQueue.size()).getBytes()); 
+         System.out.println(String.format("s%02d",messageQueue.size()));
+         //System.out.println()
          // TODO check response
-         for(int ii = 0; ii <= messageQueue.size(); ii++)
+         //for(int ii = 0; ii < messageQueue.size(); ii++)
+          while(messageQueue.size() > 0)
            //str += messageQueue.poll();
            this.out.write(messageQueue.poll().getBytes());
-
+           // System.out.println(messageQueue.poll());
           //this.out.write(str.getBytes());
-         sendingMessage = false;
+          sendingMessage = false;
         }
+      }
         
 /*        int c = 0;
         while( ( c = System.in.read() ) &gt; -1 ) {
@@ -179,6 +186,7 @@ public class Pilot{
 	  try {
 			Thread.sleep(1000);
 		} catch(InterruptedException ex) {
+      System.out.println("Error 1");
 			Thread.currentThread().interrupt();
 		}
 	  
@@ -189,6 +197,7 @@ public class Pilot{
 		try {
 			Thread.sleep(1000);
 		} catch(InterruptedException ex) {
+      System.out.println("Error 2");
 			Thread.currentThread().interrupt();
 		}
 	  //pilot.setYaw(300);
@@ -198,6 +207,7 @@ public class Pilot{
 		try {
 			Thread.sleep(5000);
 		} catch(InterruptedException ex) {
+      System.out.println("Error 3");
 			Thread.currentThread().interrupt();
 		}
 
@@ -207,6 +217,7 @@ public class Pilot{
 		try {
 			Thread.sleep(1000);
 		} catch(InterruptedException ex) {
+      System.out.println("Error 4");
 			Thread.currentThread().interrupt();
 		}
 	  }
