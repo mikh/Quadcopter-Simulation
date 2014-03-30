@@ -162,36 +162,57 @@ public class Pilot{
   } 
   
   
- public static void main (String[] args) {
-  Pilot pilot = new Pilot();
-  try {
-    pilot.connect("/dev/ttyO4" );
-    } catch (Exception ex) {
-          System.out.println(ex.getLocalizedMessage());
-      System.out.println(ex.toString());
-      ex.printStackTrace();
-      System.out.println("Could not open tty, exiting");
-      return;
-    }
-  pilot.setArmed(1);
-  pilot.sync();
-  
-  try {
-    Thread.sleep(3000);
-} catch(InterruptedException ex) {
-    Thread.currentThread().interrupt();
-}
-  pilot.setThrottle(400);
-  pilot.setYaw(300);
-  pilot.sync();
- 
-  try {
-    Thread.sleep(10000);
-  } catch(InterruptedException ex) {
-    Thread.currentThread().interrupt();
-  }
-  pilot.powerOff();
- } 
+	 public static void main (String[] args) {
+	  Pilot pilot = new Pilot();
+	  try {
+		pilot.connect("/dev/ttyO4" );
+		} catch (Exception ex) {
+			  System.out.println(ex.getLocalizedMessage());
+		  System.out.println(ex.toString());
+		  ex.printStackTrace();
+		  System.out.println("Could not open tty, exiting");
+		  return;
+		}
+	  pilot.setArmed(1);
+	  pilot.sync();
+	  
+	  try {
+			Thread.sleep(1000);
+		} catch(InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+	  
+	  // Takeoff
+	  for(int ii = 0; ii < 14; ii++){
+		pilot.setThrottle(ii * 25 + 150);
+		pilot.sync();
+		try {
+			Thread.sleep(1000);
+		} catch(InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+	  //pilot.setYaw(300);
+	  }
+	  
+	  // Hover
+		try {
+			Thread.sleep(5000);
+		} catch(InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+
+	  for(int ii = 0; ii < 14; ii++){
+		pilot.setThrottle(500 - ii * 25);
+		pilot.sync();
+		try {
+			Thread.sleep(1000);
+		} catch(InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+	  }
+	 }  
+  //pilot.setYaw(300);
+  //pilot.powerOff(); 
 }
 
 
