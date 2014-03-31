@@ -3,6 +3,7 @@ indexNamesMap.txt
 .gitignore
 *.tmp
 *.class
+*.java~
 
 # Package Files #
 *.jar
