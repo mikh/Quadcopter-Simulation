@@ -13,12 +13,34 @@ public class Pilot{
   public Pilot() { }
   
   private static Queue<String> messageQueue = new LinkedList<String>();
+  // Variables read from ArduPilot
   private boolean flyMode;
   private int accX;
   private int accY;
   private int accZ;
   private int battery;
   private int compass;
+  
+  // Variables used for Altitude
+  private int desAlt;
+  //private int errorAlt;
+  private int prevErrorAlt = 0; //set to zero for start
+  //private double errorIntegral = 0.0f; //errorIntegral starts at 0
+  //private double addPAlt;
+  //private double addIAlt;
+  //private double addDAlt;
+  //private int addToThrottle;
+  private int prevThrottleCmd = 0; //throttle starts at 0
+  private long prevTime = 0;
+  
+  //tune these values
+  final int throttleMax = 1000; //very high, will change
+  final int throttleMin = 130;
+  final int throttleScale = 100;
+  final double kP = 0.1;
+  final double kI = 0.02;
+  final double kD = 0.005;
+  final double timeStamp = 0.001;
   
   private volatile static boolean sendingMessage = false;
   
@@ -43,11 +65,47 @@ public class Pilot{
   public void setYaw(int v){ messageQueue.add(String.format("y%04d\n",v)); }
   public void setRoll(int v){ messageQueue.add(String.format("r%04d\n",v)); }
   public void setThrottle(int v){ messageQueue.add(String.format("t%04d\n",v)); }
-  public void setArmed(int v){ messageQueue.add(String.format("a%04d\n",v)); }
-  
+  public void setArmed(int v){ messageQueue.add(String.format("a%04d\n",v)); }  
+  public void setDesiredAlt(int v) { desAlt = v; }
   public boolean powerOff(){
     messageQueue.add("z0001");
     return sync();
+  }
+  
+  //set Throttle with PID control and scaling to RC control values
+  public void setThrottleWithAltitude(int current_altitude) {
+    // Calculate time since last read 
+    long currentTime = System.currentTimeMillis();
+    long timeDiff = currentTime - prevTime;
+    prevTime = currentTime;
+ 
+    //Calculate the error
+    int errorAlt = desAlt - current_altitude;
+
+    //Data collection for discrete time integration, limit data to 1000 entries
+    int errorIntegral += timeStamp*(((double)(prevErrorAlt+errorAlt))/2.0); //add midpoint approximation to total error integral
+
+    //Data for differentiation
+    int differentialAlt = errorAlt - prevErrorAlt;
+
+    //adding the PID to current throttle command
+    double addPAlt = kP*(errorAlt);
+    double addIAlt = kI*errorIntegral;
+    double addDAlt = kD*(differentialAlt);
+    int addToThrottle = throttleScale*(addPAlt+addIAlt+addDAlt); //scale to readable throttle values
+    
+    if (prevThrottleCmd+addToThrottle > throttleMax) {
+      messageQueue.add(String.format("t%04d",throttleMax));
+    }
+    else if (prevThrottleCmd+addToThrottle < throttleMin) {
+      messageQueue.add(String.format("t%04d",throttleMin));
+    }
+    else {
+      messageQueue.add(String.format("t%04d",prevThrottleCmd+addToThrottle));
+    }
+    
+    prevThrottleCmd += addToThrottle; //keep track of throttle(N-1)
+    prevErrorAlt = errorAlt; //keep track of error(N-1)
   }
   
   public boolean getFyMode() { return flyMode; }
@@ -169,62 +227,62 @@ public class Pilot{
     }
   } 
   
-  
-	 public static void main (String[] args) {
-	  Pilot pilot = new Pilot();
-	  try {
-		pilot.connect("/dev/ttyO4" );
-		} catch (Exception ex) {
-			  System.out.println(ex.getLocalizedMessage());
-		  System.out.println(ex.toString());
-		  ex.printStackTrace();
-		  System.out.println("Could not open tty, exiting");
-		  return;
-		}
-	  pilot.setArmed(1);
-	  pilot.sync();
-	  
-	  try {
-			Thread.sleep(1000);
-		} catch(InterruptedException ex) {
+  /*
+  public static void main (String[] args) {
+   Pilot pilot = new Pilot();
+   try {
+  pilot.connect("/dev/ttyO4" );
+  } catch (Exception ex) {
+     System.out.println(ex.getLocalizedMessage());
+    System.out.println(ex.toString());
+    ex.printStackTrace();
+    System.out.println("Could not open tty, exiting");
+    return;
+  }
+   pilot.setArmed(1);
+   pilot.sync();
+   
+   try {
+   Thread.sleep(1000);
+  } catch(InterruptedException ex) {
       System.out.println("Error 1");
-			Thread.currentThread().interrupt();
-		}
-	  
-	  // Takeoff
-	  for(int ii = 0; ii < 14; ii++){
-		pilot.setThrottle(ii * 25 + 150);
-		pilot.sync();
-		try {
-			Thread.sleep(1000);
-		} catch(InterruptedException ex) {
+   Thread.currentThread().interrupt();
+  }
+   
+   // Takeoff
+   for(int ii = 0; ii < 14; ii++){
+  pilot.setThrottle(ii * 25 + 150);
+  pilot.sync();
+  try {
+   Thread.sleep(1000);
+  } catch(InterruptedException ex) {
       System.out.println("Error 2");
-			Thread.currentThread().interrupt();
-		}
-	  //pilot.setYaw(300);
-	  }
-	  
-	  // Hover
-		try {
-			Thread.sleep(5000);
-		} catch(InterruptedException ex) {
+   Thread.currentThread().interrupt();
+  }
+   //pilot.setYaw(300);
+   }
+   
+   // Hover
+  try {
+   Thread.sleep(5000);
+  } catch(InterruptedException ex) {
       System.out.println("Error 3");
-			Thread.currentThread().interrupt();
-		}
+   Thread.currentThread().interrupt();
+  }
 
-	  for(int ii = 0; ii < 14; ii++){
-		pilot.setThrottle(500 - ii * 25);
-		pilot.sync();
-		try {
-			Thread.sleep(1000);
-		} catch(InterruptedException ex) {
+   for(int ii = 0; ii < 14; ii++){
+  pilot.setThrottle(500 - ii * 25);
+  pilot.sync();
+  try {
+   Thread.sleep(1000);
+  } catch(InterruptedException ex) {
       System.out.println("Error 4");
-			Thread.currentThread().interrupt();
-		}
-	  }
-	 }  
+   Thread.currentThread().interrupt();
+  }
+   }
+  }  
   //pilot.setYaw(300);
-  //pilot.powerOff(); 
+  //pilot.powerOff(); */
 }
 
 
