@@ -34,9 +34,10 @@ public class Pilot{
   private double prevTime = (double)System.currentTimeMillis();;
   
   //tune these values
-  final int throttleMax = 650; //very high, will change
+  final int throttleMax = 500; //very high, will change
   final int throttleMin = 130;
-  final int throttleScale = 100;
+  final int throttleScale = 1;
+  final int throttleDeltaMax = 10;
   final double kP = 0.1;
   final double kI = 0.02;
   final double kD = 0.005;
@@ -63,7 +64,7 @@ public class Pilot{
   public void setPitch(int v){ messageQueue.add(String.format("p%04d\n",v)); }
   public void setYaw(int v){ messageQueue.add(String.format("y%04d\n",v)); }
   public void setRoll(int v){ messageQueue.add(String.format("r%04d\n",v)); }
-  public void setThrottle(int v){ messageQueue.add(String.format("t%04d\n",v)); }
+  public void setThrottle(int v){ messageQueue.add(String.format("t%04d\n",v)); prevThrottle = v; }
   public void setArmed(int v){ messageQueue.add(String.format("a%04d\n",v)); }  
   public void setDesiredAlt(int v) { desAlt = v; }
   public boolean powerOff(){
@@ -90,21 +91,22 @@ public class Pilot{
     double addIAlt = kI*errorIntegral;
     double addDAlt = kD*(differentialAlt);
 
-    int throttleChange = throttleScale*(int)(addPAlt+addIAlt+addDAlt);
-    if(throttleChange > 30) throttleChange = 30;
-    if(throttleChange < -30) throttleChange = -30;
+    //int throttleChange = throttleScale*(int)(addPAlt+addIAlt+addDAlt);
+    int throttleChange = throttleScale * (int) addPAlt; // Remove for full PID
+    if(throttleChange > throttleDeltaMax) throttleChange = throttleDeltaMax;
+    if(throttleChange < -throttleDeltaMax) throttleChange = -throttleDeltaMax;
     int newThrottle = prevThrottle + throttleChange;
     
     // Boundry check the new Throttle
     if(newThrottle > throttleMax ){
-		  messageQueue.add(String.format("a%04d",0)); // Throttle to large. Slow land
+		  //messageQueue.add(String.format("a%04d",0)); // Throttle to large. Slow land
       newThrottle = throttleMax;
     } else if(newThrottle < throttleMin) {
       newThrottle = throttleMin;
     }
     
     messageQueue.add(String.format("t%04d",newThrottle));
-	  System.out.println("newThrottle" + Integer(newThrottle).toString());
+	  System.out.println("newThrottle" + (int) newThrottle);
 
     prevThrottle = newThrottle;
     prevErrorAlt = errorAlt; 
@@ -288,19 +290,33 @@ public class Pilot{
       System.out.println("Error 1");
    Thread.currentThread().interrupt();
   }
-   
-
-  SonarAnalogSensorInterface sa = new SonarAnalogSensorInterface("/sys/devices/ocp.2/helper.14/AIN1");
-  pilot.setDesiredAlt(60);
+ 
+  //Takeoff
   long start_time = System.currentTimeMillis();
   long RUN_TIME = 15000;
+  int ttr = 150;
+  while(ttr < 450){
+       pilot.setThrottle(ttr);
+       ttr += 25;
+         pilot.sync();
+    try{Thread.sleep(333);} catch(Exception e){}
+  }
+
+  SonarAnalogSensorInterface sa = new SonarAnalogSensorInterface("/sys/devices/ocp.2/helper.14/AIN1");
+  pilot.setDesiredAlt(30);
+  start_time = System.currentTimeMillis();
+  RUN_TIME = 60000;
   while(System.currentTimeMillis() - start_time < RUN_TIME){
     double currentHeight = sa.getRanging();
     pilot.setThrottleWithAltitude((int)currentHeight);
     pilot.sync();
     try{Thread.sleep(333);} catch(Exception e){}
   }
+  
+
+
   pilot.setDesiredAlt(0);
+  RUN_TIME = 15000;
   start_time = System.currentTimeMillis();
   while(System.currentTimeMillis() - start_time < RUN_TIME){
     double currentHeight = sa.getRanging();
@@ -464,6 +480,7 @@ class SonarAnalogSensorInterface{
     } catch(IOException e){
       System.out.println("Error. IOException with reading port");
     }
+    System.out.println("Range = " + rr);
     return rr;
   }
 }
