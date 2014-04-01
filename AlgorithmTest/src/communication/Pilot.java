@@ -31,16 +31,15 @@ public class Pilot{
   //private double addDAlt;
   //private int addToThrottle;
   private int prevThrottle = 0; //throttle starts at 0
-  private double prevTime = 0;
+  private double prevTime = (double)System.currentTimeMillis();;
   
   //tune these values
-  final int throttleMax = 1000; //very high, will change
+  final int throttleMax = 650; //very high, will change
   final int throttleMin = 130;
   final int throttleScale = 100;
   final double kP = 0.1;
   final double kI = 0.02;
   final double kD = 0.005;
-  final double timeStamp = 0.001;
   
   private volatile static boolean sendingMessage = false;
   
@@ -81,7 +80,7 @@ public class Pilot{
     int errorAlt = desAlt - current_altitude;
 
     //Data collection for discrete time integration, limit data to 1000 entries
-    errorIntegral += timeStamp*((prevErrorAlt+errorAlt)/2.0); //add midpoint approximation to total error integral
+    errorIntegral += timeDiff*((prevErrorAlt+errorAlt)/2.0) / 1000000; //add midpoint approximation to total error integral
 
     //Data for differentiation
     int differentialAlt = errorAlt - prevErrorAlt;
@@ -90,16 +89,24 @@ public class Pilot{
     double addPAlt = kP*(errorAlt);
     double addIAlt = kI*errorIntegral;
     double addDAlt = kD*(differentialAlt);
-    int newThrottle = prevThrottle + throttleScale*(int)(addPAlt+addIAlt+addDAlt);
+
+    int throttleChange = throttleScale*(int)(addPAlt+addIAlt+addDAlt);
+    if(throttleChange > 30) throttleChange = 30;
+    if(throttleChange < -30) throttleChange = -30;
+    int newThrottle = prevThrottle + throttleChange;
     
     // Boundry check the new Throttle
     if(newThrottle > throttleMax ){
-		messageQueue.add(String.format("a%04d",300)); // Throttle to large. Slow land
+		  messageQueue.add(String.format("a%04d",0)); // Throttle to large. Slow land
+      newThrottle = throttleMax;
+    } else if(newThrottle < throttleMin) {
+      newThrottle = throttleMin;
     }
     
     messageQueue.add(String.format("t%04d",newThrottle));
-	
-    prevThrottle += newThrottle;
+	  System.out.println("newThrottle" + Integer(newThrottle).toString());
+
+    prevThrottle = newThrottle;
     prevErrorAlt = errorAlt; 
     prevTime = currentTime;
   }
@@ -260,7 +267,7 @@ public class Pilot{
     }
   } 
   
-  /*
+  
   public static void main (String[] args) {
    Pilot pilot = new Pilot();
    try {
@@ -282,7 +289,28 @@ public class Pilot{
    Thread.currentThread().interrupt();
   }
    
+
+  SonarAnalogSensorInterface sa = new SonarAnalogSensorInterface("/sys/devices/ocp.2/helper.14/AIN1");
+  pilot.setDesiredAlt(60);
+  long start_time = System.currentTimeMillis();
+  long RUN_TIME = 15000;
+  while(System.currentTimeMillis() - start_time < RUN_TIME){
+    double currentHeight = sa.getRanging();
+    pilot.setThrottleWithAltitude((int)currentHeight);
+    pilot.sync();
+    try{Thread.sleep(333);} catch(Exception e){}
+  }
+  pilot.setDesiredAlt(0);
+  start_time = System.currentTimeMillis();
+  while(System.currentTimeMillis() - start_time < RUN_TIME){
+    double currentHeight = sa.getRanging();
+    pilot.setThrottleWithAltitude((int)currentHeight);
+    pilot.sync();
+    try{Thread.sleep(333);} catch(Exception e){}
+  }
+
    // Takeoff
+  /*
    for(int ii = 0; ii < 14; ii++){
   pilot.setThrottle(ii * 25 + 150);
   pilot.sync();
@@ -312,10 +340,11 @@ public class Pilot{
       System.out.println("Error 4");
    Thread.currentThread().interrupt();
   }
-   }
+   }*/
+
   }  
   //pilot.setYaw(300);
-  //pilot.powerOff(); */
+  //pilot.powerOff(); 
 }
 
 
@@ -403,3 +432,38 @@ public class TwoWaySerialComm {
     }
   }
 } */
+
+class SonarAnalogSensorInterface{
+  String port;
+  public SonarAnalogSensorInterface(String port){
+    this.port = port;
+    System.out.println("Sensor Active.");
+  }
+
+  public double getRanging(){
+    double rr = -1, rr1, rr2, rr3;
+    try{
+      BufferedReader br = new BufferedReader(new FileReader(port));
+      String range = br.readLine();
+      br.close();
+      rr1 = Double.parseDouble(range);
+      rr1 /= 3.2;
+      try{Thread.sleep(30);} catch(Exception e){}
+      br = new BufferedReader(new FileReader(port));
+      range = br.readLine();
+      br.close();
+      rr2 = Double.parseDouble(range);
+      rr2 /= 3.2;
+      try{Thread.sleep(30);} catch(Exception e){}
+      br = new BufferedReader(new FileReader(port));
+      range = br.readLine();
+      br.close();
+      rr3 = Double.parseDouble(range);
+      rr3 /= 3.2;
+      rr = (rr1 + rr2 + rr3)/3.0;
+    } catch(IOException e){
+      System.out.println("Error. IOException with reading port");
+    }
+    return rr;
+  }
+}
