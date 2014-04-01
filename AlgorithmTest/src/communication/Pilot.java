@@ -25,13 +25,13 @@ public class Pilot{
   private int desAlt;
   //private int errorAlt;
   private int prevErrorAlt = 0; //set to zero for start
-  //private double errorIntegral = 0.0f; //errorIntegral starts at 0
+  private double errorIntegral = 0.0f; //errorIntegral starts at 0
   //private double addPAlt;
   //private double addIAlt;
   //private double addDAlt;
   //private int addToThrottle;
-  private int prevThrottleCmd = 0; //throttle starts at 0
-  private long prevTime = 0;
+  private int prevThrottle = 0; //throttle starts at 0
+  private double prevTime = 0;
   
   //tune these values
   final int throttleMax = 1000; //very high, will change
@@ -72,6 +72,38 @@ public class Pilot{
     return sync();
   }
   
+  public void setThrottleWithAltitude(int current_altitude) {
+    // Calculate time since last read 
+    double currentTime = (double)System.currentTimeMillis();
+    double timeDiff = currentTime - prevTime;
+    
+    //Calculate the error
+    int errorAlt = desAlt - current_altitude;
+
+    //Data collection for discrete time integration, limit data to 1000 entries
+    errorIntegral += timeStamp*((prevErrorAlt+errorAlt)/2.0); //add midpoint approximation to total error integral
+
+    //Data for differentiation
+    int differentialAlt = errorAlt - prevErrorAlt;
+
+    //adding the PID to current throttle command
+    double addPAlt = kP*(errorAlt);
+    double addIAlt = kI*errorIntegral;
+    double addDAlt = kD*(differentialAlt);
+    int newThrottle = prevThrottle + throttleScale*(int)(addPAlt+addIAlt+addDAlt);
+    
+    // Boundry check the new Throttle
+    if(newThrottle > throttleMax ){
+		messageQueue.add(String.format("a%04d",300)); // Throttle to large. Slow land
+    }
+    
+    messageQueue.add(String.format("t%04d",newThrottle));
+	
+    prevThrottle += newThrottle;
+    prevErrorAlt = errorAlt; 
+    prevTime = currentTime;
+  }
+  /*
   //set Throttle with PID control and scaling to RC control values
   public void setThrottleWithAltitude(int current_altitude) {
     // Calculate time since last read 
@@ -101,13 +133,14 @@ public class Pilot{
       messageQueue.add(String.format("t%04d",throttleMin));
     }
     else {
-      messageQueue.add(String.format("t%04d",prevThrottleCmd+addToThrottle));
+      
     }
     
     prevThrottleCmd += addToThrottle; //keep track of throttle(N-1)
     prevErrorAlt = errorAlt; //keep track of error(N-1)
   }
-  
+  */
+ 
   public boolean getFyMode() { return flyMode; }
   public int getAccX() { return accX; }
   public int getAccY() { return accY; }
