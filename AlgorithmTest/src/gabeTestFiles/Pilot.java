@@ -47,12 +47,7 @@ public class Pilot{
     	   uartArduPilot.output.write(messageQueue.poll().getBytes());
     return;
   }
-  
-  private boolean receiveMessage(){
-    if(uartArduPilot.receivedQueue.isEmpty())
-    return false;
-    return true;
-  }
+
 
   public void setPitch(int v){ messageQueue.add(String.format("p%04d\n",v)); }
   public void setYaw(int v){ messageQueue.add(String.format("y%04d\n",v)); }
@@ -77,8 +72,15 @@ public class Pilot{
   
   public void sync() throws IOException {
 	  sendMessage();
-	  receiveMessage();
+	  //receiveMessage();
     return;
+  }
+  
+  public void parseCommand(String str){
+	  String delims = ",";
+	  String messageTokens[] = str.split(delims);
+	  //Send to xbee
+	  
   }
   
   private class PilotSerialPortEventListener implements SerialPortEventListener{
@@ -91,8 +93,8 @@ public class Pilot{
 	    
 			  try {
 				  String str = input.readLine();
-				  // parse
-	    
+				  parseCommand(str);
+				  System.out.println(str);
 			  } catch (Exception e) {
 				  System.err.println(e.toString()); // TODO
 			  }
@@ -100,237 +102,9 @@ public class Pilot{
 	  // Ignore all the other eventTypes, but you should consider the other ones.
 	 }
   }
-  
-  // CODE FOR UART COMMUNICATION
- //void connect( String portName ) throws Exception {
-    /*System.out.println("Opening connection to " + portName);
-    System.out.println(CommPortIdentifier.getPortIdentifiers());
-    System.out.println("\n\n");
-     CommPortIdentifier.addPortName(portName, CommPortIdentifier.PORT_SERIAL, null);
-     System.out.println("Added port name");
-    CommPortIdentifier portIdentifier = CommPortIdentifier
-        .getPortIdentifier( portName );
-         System.out.println("Port Identifier created " + portIdentifier.getName() + " " + portIdentifier.toString());
-    if(portIdentifier == null) System.out.println("portIdentifier == null");
-    if( portIdentifier.isCurrentlyOwned() ) {
-      System.out.println( "Error: Port is currently in use" );
-    } else {
-      int timeout = 2000;
-       System.out.println("commPort creating ");
-      SerialPort commPort = (SerialPort) portIdentifier.open( "", timeout);
-      System.out.println("commPort created");
- 
-      if( commPort instanceof SerialPort ) {
-        SerialPort serialPort = commPort;
-        System.out.println("serialPort created");
-        serialPort.setSerialPortParams( 9600,
-                                        SerialPort.DATABITS_8,
-                                        SerialPort.STOPBITS_1,
-                                        SerialPort.PARITY_NONE );
-        System.out.println("serialPort params defined");
-        InputStream in = serialPort.getInputStream();
-        System.out.println("Input stream created");
-        OutputStream out = serialPort.getOutputStream();
-        System.out.println("output stream created");
- 
-        ( new Thread( new SerialReader( in ) ) ).start();
-        System.out.println("input thread started");
-        ( new Thread( new SerialWriter( out ) ) ).start();
-         System.out.println("output thread started");
- 
-      } else {
-        System.out.println( "Error: Only serial ports are handled by this example." );
-      }
-    }
-     System.out.println("Done with connect");*/
-//  }
+
   } 
-  
-  /*
-  public static void main (String[] args) {
-      int RUN_TIME = 30000;
-      int DELAY_MS = 333;
-      int HOVER_HEIGHT = 45;
-      int TAKEOFF_MAX_THROTTLE = 400;
-      int MIN_THROTTLE = 150;
-      int THROTTLE_INCREMENT = 15;
-      Pilot pilot = new Pilot();
-      try {
-          pilot.connect("/dev/ttyO4" );
-      } catch (Exception ex) {
-          System.out.println(ex.getLocalizedMessage());
-          System.out.println(ex.toString());
-          ex.printStackTrace();
-          System.out.println("Could not open tty, exiting");
-          return;
-      }  
-      pilot.setArmed(1);
-      pilot.sync();
-       
-      try {
-          Thread.sleep(1000);
-      } catch(InterruptedException ex) {
-          System.out.println("Error 1");
-          Thread.currentThread().interrupt();
-      }
-     
-      //Takeoff
-      int ttr = MIN_THROTTLE;
-      while(ttr < TAKEOFF_MAX_THROTTLE){
-          pilot.setThrottle(ttr);
-          System.out.println("TAKEOFF: " + ttr);
-          ttr += THROTTLE_INCREMENT;
-          pilot.sync();
-          try{Thread.sleep(DELAY_MS);} catch(Exception e){}
-      }
-    
-      SonarAnalogSensorInterface sa = new SonarAnalogSensorInterface("/sys/devices/ocp.2/helper.14/AIN1");
-      pilot.setDesiredAlt(HOVER_HEIGHT);
-      int loop = 0;
-      int max_loop = RUN_TIME/DELAY_MS;
-      while(loop < max_loop){
-          double currentHeight = sa.getRanging();
-          pilot.setThrottleWithAltitude((int)currentHeight);
-          pilot.sync();
-          try{Thread.sleep(DELAY_MS);} catch(Exception e){}
-          loop++;
-      }
-      
-    
-      //land
-      ttr = pilot.getThrottle();
-      while(ttr > MIN_THROTTLE){
-          pilot.setThrottle(ttr);
-          System.out.println("LAND: " + ttr);
-          ttr-= THROTTLE_INCREMENT;
-          pilot.sync();
-          try{Thread.sleep(333);} catch(Exception e){}
-      }
-      System.out.println("Done.");
-      return;
-    
-       // Takeoff
-      /*
-       for(int ii = 0; ii < 14; ii++){
-      pilot.setThrottle(ii * 25 + 150);
-      pilot.sync();
-      try {
-       Thread.sleep(1000);
-      } catch(InterruptedException ex) {
-          System.out.println("Error 2");
-       Thread.currentThread().interrupt();
-      }
-       //pilot.setYaw(300);
-       }
-       
-       // Hover
-      try {
-       Thread.sleep(5000);
-      } catch(InterruptedException ex) {
-          System.out.println("Error 3");
-       Thread.currentThread().interrupt();
-      }
-    
-       for(int ii = 0; ii < 14; ii++){
-      pilot.setThrottle(500 - ii * 25);
-      pilot.sync();
-      try {
-       Thread.sleep(1000);
-      } catch(InterruptedException ex) {
-          System.out.println("Error 4");
-       Thread.currentThread().interrupt();
-      }
-       }*/
-    //}  
-  //pilot.setYaw(300);
-  //pilot.powerOff(); 
-//} 
 
-
-
-/* import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
- 
-public class TwoWaySerialComm {
- 
-  void connect( String portName ) throws Exception {
-    CommPortIdentifier portIdentifier = CommPortIdentifier
-        .getPortIdentifier( portName );
-    if( portIdentifier.isCurrentlyOwned() ) {
-      System.out.println( "Error: Port is currently in use" );
-    } else {
-      int timeout = 2000;
-      CommPort commPort = portIdentifier.open( this.getClass().getName(), timeout );
- 
-      if( commPort instanceof SerialPort ) {
-        SerialPort serialPort = ( SerialPort )commPort;
-        serialPort.setSerialPortParams( 57600,
-                                        SerialPort.DATABITS_8,
-                                        SerialPort.STOPBITS_1,
-                                        SerialPort.PARITY_NONE );
- 
-        InputStream in = serialPort.getInputStream();
-        OutputStream out = serialPort.getOutputStream();
- 
-        ( new Thread( new SerialReader( in ) ) ).start();
-        ( new Thread( new SerialWriter( out ) ) ).start();
- 
-      } else {
-        System.out.println( "Error: Only serial ports are handled by this example." );
-      }
-    }
-  }
- 
-  public static class SerialReader implements Runnable {
- 
-    InputStream in;
- 
-    public SerialReader( InputStream in ) {
-      this.in = in;
-    }
- 
-    public void run() {
-      byte[] buffer = new byte[ 1024 ];
-      int len = -1;
-      try {
-        while( ( len = this.in.read( buffer ) ) &gt; -1 ) {
-          System.out.print( new String( buffer, 0, len ) );
-        }
-      } catch( IOException e ) {
-        e.printStackTrace();
-      }
-    }
-  }
- 
-  public static class SerialWriter implements Runnable {
- 
-    OutputStream out;
- 
-    public SerialWriter( OutputStream out ) {
-      this.out = out;
-    }
- 
-    public void run() {
-      try {
-        int c = 0;
-        while( ( c = System.in.read() ) &gt; -1 ) {
-          this.out.write( c );
-        }
-      } catch( IOException e ) {
-        e.printStackTrace();
-      }
-    }
-  }
- 
-  public static void main( String[] args ) {
-    try {
-      ( new TwoWaySerialComm() ).connect( "/dev/ttyUSB0" );
-    } catch( Exception e ) {
-      e.printStackTrace();
-    }
-  }
-} */
 
 
 

@@ -43,19 +43,12 @@ public class UartDriver2 {
   CommPortIdentifier portId = null;
   Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
 
-  //First, Find an instance of serial port as set in PORT_NAMES.
   while (portEnum.hasMoreElements()) {
    CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
    if (currPortId.getName().equals(port_name)) { 
 	     portId = currPortId;
 	     break;
    }
-   /*for (String portName : PORT_NAMES) {
-    if (currPortId.getName().equals(portName)) {
-     portId = currPortId;
-     break;
-    }
-   }*/
   }
   if (portId == null) {
    System.out.println("Could not find COM port."); // TODO throw
@@ -78,7 +71,7 @@ public class UartDriver2 {
    output = serialPort.getOutputStream();
  
    // add event listeners
-   //serialPort.addEventListener(this);
+   //serialPort.addEventListener(this); // do this in your own code!
    serialPort.notifyOnDataAvailable(true);
   } catch (Exception e) {
    System.err.println(e.toString());
@@ -99,21 +92,6 @@ public class UartDriver2 {
  /**
   * Handle an event on the serial port. Read the data and print it.
   */
- // public Queue<String> receivedQueue = new LinkedList<String>();
- 
+ // Do in your own code!
 
-/* public static void main(String[] args) throws Exception {
-  UartDriver main = new UartDriver();
-  main.initialize();
-  Thread t=new Thread() {
-   public void run() {
-    //the following line will keep this app alive for 1000 seconds,
-    //waiting for events to occur and responding to them (printing incoming messages to console).
-    try {Thread.sleep(1000000);} catch (InterruptedException ie) {}
-   }
-  };
-  t.start();
-  System.out.println("Started");
- }*/
- 
 }

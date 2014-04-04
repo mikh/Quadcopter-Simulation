@@ -83,9 +83,12 @@ public class PilotController implements Runnable {
 	}
 
 	public void run() {
-		   while (!shutdown) {
+		System.out.println("HERE i AM!");   
+		while (!shutdown) {
+			   
 			   try {
-				   setThrottleWithAltitude(50);
+				   
+				   
 				   pilot.sync();
 		           Thread.sleep(333);
 		           
@@ -107,5 +110,27 @@ public class PilotController implements Runnable {
 		      }
 		
 	}
+	
+	   public static void main(String[] args)
+	    {
+		   PilotController u;
+		try {
+			u = PilotController.getInstance();
+			u.run();
+			u.setThrottleWithAltitude(50);
+			Thread.sleep(1000);
+			u.setThrottleWithAltitude(500);
+			Thread.sleep(10000);
+			u.shutdownConroller();
+		} catch (TooManyListenersException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	        
+	    }
+	
 	
 }
