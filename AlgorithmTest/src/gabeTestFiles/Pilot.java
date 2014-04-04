@@ -15,7 +15,8 @@ public class Pilot{
 	private Pilot() throws TooManyListenersException { 
 		uartArduPilot = new UartDriver2("/dev/ttyO4"); 
 		uartArduPilot.initialize();
-		uartArduPilot.serialPort.addEventListener(new PilotSerialPortEventListener()); // Throws TooManyListenersException
+		uartArduPilot.serialPort.addEventListener(new PilotSerialPortEventListener()); // Throws TooManyListenersException. This is a nested child class examples
+
 	}
     public static Pilot getInstance() throws TooManyListenersException{
     	if(myPilot == null) myPilot = new Pilot();
@@ -84,62 +85,21 @@ public class Pilot{
   }
   
   private class PilotSerialPortEventListener implements SerialPortEventListener{
-	  private BufferedReader input;
-	  PilotSerialPortEventListener() {
-		   input = uartArduPilot.input;
-	  }
 	  public synchronized void serialEvent(SerialPortEvent oEvent) {
 		  if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
-	    
 			  try {
-				  String str = input.readLine();
+				  String str = uartArduPilot.input.readLine();
 				  parseCommand(str);
-				  System.out.println(str);
+				  //System.out.println("Message Received: "+str);
+				  // Logger
 			  } catch (Exception e) {
 				  System.err.println(e.toString()); // TODO
 			  }
+		  } else { // Ignore all the other eventTypes, but you should consider the other ones.
+			  System.out.println("Serial Port Event not handled received");
 		  }
-	  // Ignore all the other eventTypes, but you should consider the other ones.
+	  
 	 }
   }
 
-  } 
-
-
-
-
-class SonarAnalogSensorInterface{
-  String port;
-  public SonarAnalogSensorInterface(String port){
-    this.port = port;
-    System.out.println("Sensor Active.");
-  }
-
-  public double getRanging(){
-    double rr = -1, rr1, rr2, rr3;
-    try{
-      BufferedReader br = new BufferedReader(new FileReader(port));
-      String range = br.readLine();
-      br.close();
-      rr1 = Double.parseDouble(range);
-      rr1 /= 3.2;
-      try{Thread.sleep(30);} catch(Exception e){}
-      br = new BufferedReader(new FileReader(port));
-      range = br.readLine();
-      br.close();
-      rr2 = Double.parseDouble(range);
-      rr2 /= 3.2;
-      try{Thread.sleep(30);} catch(Exception e){}
-      br = new BufferedReader(new FileReader(port));
-      range = br.readLine();
-      br.close();
-      rr3 = Double.parseDouble(range);
-      rr3 /= 3.2;
-      rr = (rr1 + rr2 + rr3)/3.0;
-    } catch(IOException e){
-      System.out.println("Error. IOException with reading port");
-    }
-    System.out.println("Range = " + rr);
-    return rr;
-  }
-}
+} 

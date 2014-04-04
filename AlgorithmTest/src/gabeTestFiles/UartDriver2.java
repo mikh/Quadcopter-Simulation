@@ -47,6 +47,7 @@ public class UartDriver2 {
    CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
    if (currPortId.getName().equals(port_name)) { 
 	     portId = currPortId;
+	     System.out.println("Connected to " + currPortId.getName());
 	     break;
    }
   }

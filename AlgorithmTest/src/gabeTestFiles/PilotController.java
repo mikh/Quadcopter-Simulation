@@ -49,15 +49,13 @@ public class PilotController implements Runnable {
 	    
 	    // Boundry check the new Throttle
 	    if(newThrottle > throttleMax ){
-			  //messageQueue.add(String.format("a%04d",0)); // Throttle to large. Slow land
 	      newThrottle = throttleMax;
 	    } else if(newThrottle < throttleMin) {
 	      newThrottle = throttleMin;
 	    }
 	    
 	    pilot.setThrottle(newThrottle);
-	   // messageQueue.add(String.format("t%04d",newThrottle));
-		//  System.out.println("newThrottle" + (int) newThrottle);
+		System.out.println("newThrottle" +  newThrottle);
 
 	    prevThrottle = newThrottle;
 	    prevErrorAlt = errorAlt; 
@@ -83,21 +81,16 @@ public class PilotController implements Runnable {
 	}
 
 	public void run() {
-		System.out.println("HERE i AM!");   
+		System.out.println("HERE i AM!");
+		double current_altitude = 0;
 		while (!shutdown) {
 			   
 			   try {
-				   
-				   
+//				   current_altitude = SensorMonitor.getAltitude(); or something like this
+				   setThrottleWithAltitude(current_altitude++);
+				   	
 				   pilot.sync();
 		           Thread.sleep(333);
-		           
-		           
-		           // stabalize loop
-		           //setThrottleWithAltitude(50);
-		           //pilot.sync();
-		           
-		           
 		           
 		          } catch (InterruptedException e) {
 		              // good practice
@@ -117,10 +110,10 @@ public class PilotController implements Runnable {
 		try {
 			u = PilotController.getInstance();
 			u.run();
-			u.setThrottleWithAltitude(50);
-			Thread.sleep(1000);
-			u.setThrottleWithAltitude(500);
-			Thread.sleep(10000);
+			u.setDesAlt(40);
+			Thread.sleep(3000);
+			u.setDesAlt(4);;
+			Thread.sleep(3000);
 			u.shutdownConroller();
 		} catch (TooManyListenersException e) {
 			// TODO Auto-generated catch block
@@ -129,7 +122,7 @@ public class PilotController implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	        
+			System.out.println("DONE");
 	    }
 	
 	
