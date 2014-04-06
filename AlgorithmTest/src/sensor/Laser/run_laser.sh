@@ -4,4 +4,4 @@ stty -F /dev/ttyO4 9600
 JAVA_HOME=/home/root/java/jdk1.7.0_51/
 rm /var/lock/LCK..ttyO4
 cd /home/root/laser
-/home/root/java/jdk1.7.0_51/bin/java -cp .:/usr/share/java/rxtx.jar -Djava.library.path=/usr/lib/jni/ -Dgnu.io.rxtx.SerialPorts=/dev/ttyO4 Laser_test 2>> error.txt
+/home/root/java/jdk1.7.0_51/bin/java -cp .:/usr/share/java/rxtx.jar -Djava.library.path=/usr/lib/jni/ -Dgnu.io.rxtx.SerialPorts=/dev/ttyO4 LaserSensorInterface 2>> error.txt
