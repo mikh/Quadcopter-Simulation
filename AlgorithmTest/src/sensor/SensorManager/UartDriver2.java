@@ -44,13 +44,14 @@ public class UartDriver2 {
   Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
 
   while (portEnum.hasMoreElements()) {
-   CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
-   if (currPortId.getName().equals(port_name)) { 
-	     portId = currPortId;
-	     System.out.println("Connected to " + currPortId.getName());
-	     break;
-   }
+      CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
+      if (currPortId.getName().equals(port_name)) { 
+	        portId = currPortId;
+	        System.out.println("Connected to " + currPortId.getName());
+	        break;
+      }
   }
+
   if (portId == null) {
    System.out.println("Could not find COM port."); // TODO throw
    return;

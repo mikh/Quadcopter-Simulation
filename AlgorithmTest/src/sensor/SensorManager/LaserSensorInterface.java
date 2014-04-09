@@ -10,11 +10,10 @@ public class LaserSensorInterface{
 	private int ID;
 
 	public LaserSensorInterface(String port) throws TooManyListenersException{
+		UART_PORT_NAME = port;
 		uart = new UartDriver2(UART_PORT_NAME);
 		uart.initialize();
 		uart.serialPort.addEventListener(new LaserSerialPortEventListner());
-		theBoss = SensorManager.getInstance();
-		UART_PORT_NAME = port;
 	}
 
 	private void sendRangeCommand() throws IOException{
@@ -23,12 +22,16 @@ public class LaserSensorInterface{
 
 	private class LaserSerialPortEventListner implements SerialPortEventListener{
 		public synchronized void serialEvent(SerialPortEvent oEvent){
+			String str = "";
 			if(oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE){
 				try{
-					String str = uart.input.readLine();
-					theBoss.addRange(Double.parseDouble(str), ID);
+					str = uart.input.readLine();
+					if(!str.equals("--.--"))
+						theBoss.addRange(Double.parseDouble(str), ID);
+					else
+						theBoss.addRange(-1, ID);
 				} catch(Exception e){
-					System.out.println("Read exception occurred.");
+					System.out.println("Read exception occurred. str = " + str);
 					e.printStackTrace();
 				}
 			} else{
@@ -38,6 +41,7 @@ public class LaserSensorInterface{
 	}
 
 	public void getRanging(){
+		if(theBoss == null) theBoss = SensorManager.getInstance();
 		try{
 			sendRangeCommand();
 		} catch(Exception e){
